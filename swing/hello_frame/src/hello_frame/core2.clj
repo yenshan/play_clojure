@@ -1,5 +1,5 @@
 (ns hello-frame.core2
-  (import (javax.swing JFrame))
+  (:import [javax.swing JFrame])
   (:gen-class))
 
 (.length "Hello")
