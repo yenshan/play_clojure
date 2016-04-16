@@ -1,6 +1,6 @@
 (ns test-paint.core
   (:import [javax.swing JFrame JPanel Timer]
-           [java.awt.event KeyListener ActionListener])
+           [java.awt.event ActionListener])
   (:gen-class))
 
 (def py (atom 0))
