@@ -1,33 +1,26 @@
 (ns pong.core
   (:import [javax.swing JFrame JPanel Timer]
-           [java.awt.event ActionListener KeyListener])
+           [java.awt.event ActionListener KeyListener KeyEvent])
   (:gen-class))
 
-(defn new-ball
-  ([x y w h vx vy] {:x x :y y :w w :h h :vx vx :vy vy})
-  ([bal x y vx vy] (assoc bal :x x :y y :vx vx :vy vy)))
+(def ball (atom {:x 0 :y 0 
+                 :w 10 :h 10
+                 :vx 1 :vy 1
+                 :color java.awt.Color/BLACK
+                 :draw #(.fillOval %1 %2 %3 %4 %5)
+                 }))
 
+(def bar (atom {:x 200 :y 300
+                 :w 50 :h 10
+                 :color java.awt.Color/BLUE
+                 :draw #(.fillRect %1 %2 %3 %4 %5)
+                 }))
 
-(defn new-bar [x y w h] {:x x :y y :w w :h h})
-
-(def ball (atom (new-ball 0 0 10 10 1 1)))
-(def bar (atom (new-bar 200 300 50 10)))
-
-
-(defn move-bar
-  [dat dr]
-  (let [d (dr {:left - :right +})
-        x (:x @dat)]
-    (->> (d x 5)
-         (assoc @dat :x)
-         (reset! dat))))
-      
-(defn nextv
-  [v pos rng]
-  (if (and (<= pos (- rng 10))
-           (>= pos 0))
-    v
-    (- v)))
+(defn turn-if-hit
+  [v pos minp maxp]
+  (cond (= v 0) v
+        (> v 0) (if (< pos maxp) v (- v))
+        (< v 0) (if (> pos minp) v (- v))))
 
 (defn move-by-velocity
   [obj]
@@ -35,32 +28,33 @@
     (assoc obj :x (+ x vx) :y (+ y vy))))
 
 (defn change-velocity
-  [obj max-x max-y]
-  (let [{x :x y :y vx :vx vy :vy}  obj]
+  [obj [min-x min-y max-x max-y]]
+  (let [{x :x y :y w :w h :h vx :vx vy :vy}  obj
+        px (+ x (/ w 2))
+        py (+ y (/ h 2))]
     (assoc obj 
-           :vx (nextv vx x max-x)
-           :vy (nextv vy y max-y))))
+           :vx (turn-if-hit vx px min-x max-x)
+           :vy (turn-if-hit vy py min-y max-y))))
 
-(defn move-ball
-  [bal max-x max-y]
+(defn move-ball!
+  [bal rect]
   (reset! ball (move-by-velocity @ball))
-  (reset! ball (change-velocity @ball max-x max-y)))
+  (reset! ball (change-velocity @ball rect)))
 
-(defn draw-ball
-  [bal g]
-  (let [x (:x bal) y (:y bal)
-        w (:w bal) h (:h bal)]
+(defn move-bar!
+  [dat dr]
+  (let [d (dr {:left - :right +})
+        x (:x @dat)]
+    (->> (d x 5)
+         (assoc @dat :x)
+         (reset! dat))))
+      
+(defn draw
+  [obj g]
+  (let [{x :x y :y w :w h :h} obj]
     (doto g 
-      (.setColor java.awt.Color/BLACK)
-      (.fillOval x y w h))))
-
-(defn draw-bar
-  [bar g]
-  (let [x (:x bar) y (:y bar)
-        w (:w bar) h (:h bar)]
-    (doto g 
-      (.setColor java.awt.Color/BLACK)
-      (.fillRect x y w h))))
+      (.setColor (:color obj))
+      ((:draw obj) x y w h))))
 
 (defn main-panel 
   []
@@ -68,9 +62,9 @@
     (paintComponent [g]
       (let [w (proxy-super getWidth)
             h (proxy-super getHeight)]
-        (move-ball ball w h)
-        (draw-ball @ball g)
-        (draw-bar @bar g)
+        (move-ball! ball [0 0 w h])
+        (draw @ball g)
+        (draw @bar g)
         ))
     (actionPerformed [e]
       (.repaint this))))
@@ -79,8 +73,8 @@
   (proxy [KeyListener] []
     (keyPressed [e]
       (let [kc (.getKeyCode e)]
-        (cond (= kc 37) (move-bar bar :left)
-              (= kc 39) (move-bar bar :right))))
+        (cond (= kc KeyEvent/VK_LEFT) (move-bar! bar :left)
+              (= kc KeyEvent/VK_RIGHT) (move-bar! bar :right))))
     (keyReleased [e])
     (keyTyped [e])))
 
