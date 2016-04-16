@@ -14,12 +14,14 @@
                  :w 50 :h 10
                  :color java.awt.Color/BLUE
                  :draw #(.fillRect %1 %2 %3 %4 %5)
+                 :ref-v :vy
                  }))
 
-(def walls {:left   {:x 0   :y 0   :w 1   :h 400}
-            :right  {:x 390 :y 0   :w 1   :h 400}
-            :top    {:x 0   :y 0   :w 400 :h 1}
-            :bottom {:x 0   :y 390 :w 400 :h 1}})
+(def walls [{:x 0   :y 0   :w 1   :h 400 :ref-v :vx} ;left wall
+            {:x 390 :y 0   :w 1   :h 400 :ref-v :vx} ;right wall
+            {:x 0   :y 0   :w 400 :h 1 :ref-v :vy}   ;top wall
+            {:x 0   :y 390 :w 400 :h 1 :ref-v :vy}   ;bottom wall
+            ])
 
 (defn move-by-velocity
   [obj]
@@ -28,31 +30,28 @@
 
 (defn four-pos [{x :x y :y w :w h :h}] [x y (+ x w) (+ y h)])
 
-(defn is-hit?
+(defn hit?
   [obj1 obj2]
   (let [[tx1 ty1 bx1 by1] (four-pos obj1)
         [tx2 ty2 bx2 by2] (four-pos obj2)]
     (not (or (< bx1 tx2) (< by1 ty2) (< bx2 tx1) (< by2 ty1)))))
 
 (defn turn-if-hit
-  [v obj1 obj2]
-  (cond (= v 0) v
-        :else (if (is-hit? obj1 obj2) (- v) v)))
-
-(defn change-velocity
-  [bal vt bar]
-  (let [{v vt} bal]
-    (assoc bal vt (turn-if-hit v bal bar))))
+  [bal bar]
+  (let [vt (:ref-v bar)
+        v (vt bal)]
+    (if (hit? bal bar)
+      (assoc bal vt (- v))
+      bal)))
 
 (defn move-ball!
   [bal]
-  (reset! ball (-> @ball
-                   (move-by-velocity)
-                   (change-velocity :vy @bar)
-                   (change-velocity :vy (:top walls))
-                   (change-velocity :vy (:bottom walls))
-                   (change-velocity :vx (:left walls))
-                   (change-velocity :vx (:right walls)))))
+  (let [objs (cons @bar walls)
+        collision-check (partial reduce turn-if-hit)]
+    (reset! ball (-> @ball 
+                     (move-by-velocity)
+                     (collision-check objs)
+                     ))))
 
 (defn move-bar!
   [dat dr]
