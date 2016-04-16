@@ -3,7 +3,7 @@
            [java.awt.event ActionListener KeyListener KeyEvent])
   (:gen-class))
 
-(def ball (atom {:x 0 :y 0 
+(def ball (atom {:x 10 :y 10 
                  :w 10 :h 10
                  :vx 1 :vy 1
                  :color java.awt.Color/BLACK
@@ -16,25 +16,15 @@
                  :draw #(.fillRect %1 %2 %3 %4 %5)
                  }))
 
-(defn turn-if-hit
-  [v pos minp maxp]
-  (cond (= v 0) v
-        (> v 0) (if (< pos maxp) v (- v))
-        (< v 0) (if (> pos minp) v (- v))))
+(def walls {:left   {:x 0   :y 0   :w 1   :h 400}
+            :right  {:x 390 :y 0   :w 1   :h 400}
+            :top    {:x 0   :y 0   :w 400 :h 1}
+            :bottom {:x 0   :y 390 :w 400 :h 1}})
 
 (defn move-by-velocity
   [obj]
   (let [{x :x y :y vx :vx vy :vy} obj]
     (assoc obj :x (+ x vx) :y (+ y vy))))
-
-(defn change-velocity
-  [obj [min-x min-y max-x max-y]]
-  (let [{x :x y :y w :w h :h vx :vx vy :vy}  obj
-        px (+ x (/ w 2))
-        py (+ y (/ h 2))]
-    (assoc obj 
-           :vx (turn-if-hit vx px min-x max-x)
-           :vy (turn-if-hit vy py min-y max-y))))
 
 (defn four-pos [{x :x y :y w :w h :h}] [x y (+ x w) (+ y h)])
 
@@ -44,25 +34,25 @@
         [tx2 ty2 bx2 by2] (four-pos obj2)]
     (not (or (< bx1 tx2) (< by1 ty2) (< bx2 tx1) (< by2 ty1)))))
 
-(defn turn-if-hit2
+(defn turn-if-hit
   [v obj1 obj2]
   (cond (= v 0) v
         :else (if (is-hit? obj1 obj2) (- v) v)))
 
-(defn change-velocity2
-  [bal bar]
-  (let [{x :x y :y w :w h :h vx :vx vy :vy}  bal
-        px (+ x (/ w 2))
-        py (+ y (/ h 2))]
-    (assoc bal 
-           :vy (turn-if-hit2 vy bal bar))))
+(defn change-velocity
+  [bal vt bar]
+  (let [{v vt} bal]
+    (assoc bal vt (turn-if-hit v bal bar))))
 
 (defn move-ball!
-  [bal rect]
-  (reset! ball (move-by-velocity @ball))
-  (reset! ball (change-velocity @ball rect))
-  (reset! ball (change-velocity2 @ball @bar))
-  )
+  [bal]
+  (reset! ball (-> @ball
+                   (move-by-velocity)
+                   (change-velocity :vy @bar)
+                   (change-velocity :vy (:top walls))
+                   (change-velocity :vy (:bottom walls))
+                   (change-velocity :vx (:left walls))
+                   (change-velocity :vx (:right walls)))))
 
 (defn move-bar!
   [dat dr]
@@ -85,7 +75,7 @@
     (paintComponent [g]
       (let [w (proxy-super getWidth)
             h (proxy-super getHeight)]
-        (move-ball! ball [0 0 w h])
+        (move-ball! ball)
         (draw @ball g)
         (draw @bar g)
         ))
