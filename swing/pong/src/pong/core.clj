@@ -36,10 +36,33 @@
            :vx (turn-if-hit vx px min-x max-x)
            :vy (turn-if-hit vy py min-y max-y))))
 
+(defn four-pos [{x :x y :y w :w h :h}] [x y (+ x w) (+ y h)])
+
+(defn is-hit?
+  [obj1 obj2]
+  (let [[tx1 ty1 bx1 by1] (four-pos obj1)
+        [tx2 ty2 bx2 by2] (four-pos obj2)]
+    (not (or (< bx1 tx2) (< by1 ty2) (< bx2 tx1) (< by2 ty1)))))
+
+(defn turn-if-hit2
+  [v obj1 obj2]
+  (cond (= v 0) v
+        :else (if (is-hit? obj1 obj2) (- v) v)))
+
+(defn change-velocity2
+  [bal bar]
+  (let [{x :x y :y w :w h :h vx :vx vy :vy}  bal
+        px (+ x (/ w 2))
+        py (+ y (/ h 2))]
+    (assoc bal 
+           :vy (turn-if-hit2 vy bal bar))))
+
 (defn move-ball!
   [bal rect]
   (reset! ball (move-by-velocity @ball))
-  (reset! ball (change-velocity @ball rect)))
+  (reset! ball (change-velocity @ball rect))
+  (reset! ball (change-velocity2 @ball @bar))
+  )
 
 (defn move-bar!
   [dat dr]
