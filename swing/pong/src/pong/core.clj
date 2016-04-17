@@ -62,7 +62,7 @@
          (reset! dat))))
       
 (defn draw
-  [obj g]
+  [g obj]
   (let [{x :x y :y w :w h :h} obj]
     (doto g 
       (.setColor (:color obj))
@@ -75,8 +75,9 @@
       (let [w (proxy-super getWidth)
             h (proxy-super getHeight)]
         (move-ball! ball)
-        (draw @ball g)
-        (draw @bar g)
+        (proxy-super paintComponent  g)
+        (draw g @ball)
+        (draw g @bar)
         ))
     (actionPerformed [e]
       (.repaint this))))
