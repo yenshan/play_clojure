@@ -3,8 +3,8 @@
            [java.awt.event ActionListener KeyListener KeyEvent])
   (:gen-class))
 
-(def i-type [1 1 0 0
-             0 1 1 0])
+(def i-type [1 0 0 0
+             1 1 1 0])
 
 (defn draw-box
   [g x y]
@@ -12,13 +12,30 @@
     (.setColor java.awt.Color/BLACK)
     (.fillRect x y 18 18)))
 
+
+(defn cal-h
+  [i x op] 
+  (-> i (mod 4) (* 18) (->> (op x))))
+
+(defn cal-h-p [i x] (cal-h i x +))
+(defn cal-h-m [i x] (cal-h i x -))
+
+(defn cal-v 
+  [i y op]
+  (if (< i 4) y (op y 18)))
+
+(defn cal-v-p [i y] (cal-v i y +))
+(defn cal-v-m [i y] (cal-v i y -))
+
 (defn draw-block
-  [g x y col]
+  [g x y angl col]
   (doseq [i (range 0 (count col))]
     (let [e (nth col i)
-          px (-> i (mod 4) (* 18) (+ x))
-          py (if (>= i 4) (+ y 18) y)]
-      (if (= e 1) (draw-box g px py)))))
+          opx ({0 cal-h-p, 90 cal-v-m, 180 cal-h-m, 270 cal-v-p} angl)
+          opy ({0 cal-v-p, 90 cal-h-m, 180 cal-v-m, 270 cal-h-p} angl)
+          px (opx i x)
+          py (opy i y)]
+      (when (= e 1) (draw-box g px py)))))
 
 
 (defn main-panel 
@@ -27,7 +44,10 @@
     (paintComponent [g]
       (let [w (proxy-super getWidth)
             h (proxy-super getHeight)]
-        (draw-block g 10 10 i-type)
+          (draw-block g 50 20 0 i-type)
+          (draw-block g 50 100 90 i-type)
+          (draw-block g 50 200 180 i-type)
+          (draw-block g 50 300 270 i-type)
         ))
     (actionPerformed [e]
       (.repaint this))))
