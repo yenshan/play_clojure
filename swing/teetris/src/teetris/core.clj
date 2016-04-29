@@ -24,37 +24,42 @@
                      0 1 0 0]
                  })
 
-(def block-table (vals block-type))
+(def block (atom {:x 5 :y 0 
+                  :type :I :angle 0}))
 
-(def ppx (atom 5))
-(def ppy (atom 0))
-(def bti (atom 0))
-(def angl (atom 0))
-
+(defn next-type
+  [t]
+  (let [tbl (keys block-type)
+        idx (.indexOf tbl t)]
+    (if (= idx (last tbl))
+      (nth tbl 0) 
+      (nth tbl (inc idx)))))
 
 (defn draw-box
   [g x y]
+  (let [px (* x BLOCK-SIZE)
+        py (* y BLOCK-SIZE)
+        sz (- BLOCK-SIZE 1)]
   (doto g 
     (.setColor java.awt.Color/BLACK)
-    (.fillRect x y 19 19)))
-
+    (.fillRect px py sz sz))))
 
 (defn cal-h
   [i x op] 
-  (-> i (mod 4) (* BLOCK-SIZE) (->> (op x))))
+  (-> i (mod 4) (->> (op x))))
 (defn cal-h-p [i x] (cal-h i x +))
 (defn cal-h-m [i x] (cal-h i x -))
 
 (defn cal-v 
   [i y op]
-  (if (< i 4) y (op y BLOCK-SIZE)))
+  (if (< i 4) y (op y 1)))
 (defn cal-v-p [i y] (cal-v i y +))
 (defn cal-v-m [i y] (cal-v i y -))
 
 (defn draw-block
-  [g ix iy angl col]
-  (let [x (* ix BLOCK-SIZE)
-        y (* iy BLOCK-SIZE)]
+  [g blk]
+  (let [{x :x y :y angl :angle typ :type} blk
+        col (block-type typ)]
     (doseq [i (range 0 (count col))]
       (let [e (nth col i)
             opx ({0 cal-h-p, 90 cal-v-p, 180 cal-h-m, 270 cal-v-m} angl)
@@ -63,20 +68,23 @@
             py (opy i y)]
         (when (= e 1) (draw-box g px py))))))
 
-
 (def game-loop 
   (proxy [ActionListener] []
     (actionPerformed [e]
-      (swap! ppy + 1)
-      (when (>= @ppy FIELD-HEIGHT) 
-        (do (reset! ppy 0)
-            (swap! bti #(mod (inc %) 7)))))))
+      (if (< (:y @block) FIELD-HEIGHT)
+        (swap! block update :y inc)
+        (do
+          (swap! block assoc :y 0)
+          (swap! block update :type next-type)
+          )))))
+
+
+(defn rotate-left [angl] (-> angl (+ 90) (mod 360)))
 
 (def main-panel
   (proxy [JPanel ActionListener] []
     (paintComponent [g]
-      (let [block-type (nth block-table @bti)]
-        (draw-block g @ppx @ppy @angl block-type)))
+        (draw-block g @block))
     (actionPerformed [e]
       (.repaint this))))
 
@@ -84,9 +92,9 @@
   (proxy [KeyListener] []
     (keyPressed [e]
       (let [kc (.getKeyCode e)]
-        (cond (= kc KeyEvent/VK_LEFT) (swap! ppx - 1)
-              (= kc KeyEvent/VK_RIGHT) (swap! ppx + 1)
-              (= kc KeyEvent/VK_DOWN) (swap! angl #(mod (+ % 90) 360)))))
+        (cond (= kc KeyEvent/VK_LEFT) (swap! block update :x dec)
+              (= kc KeyEvent/VK_RIGHT) (swap! block update :x inc)
+              (= kc KeyEvent/VK_DOWN) (swap! block update :angle rotate-left))))
     (keyReleased [e])
     (keyTyped [e])))
 
