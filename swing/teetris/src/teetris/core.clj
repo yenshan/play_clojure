@@ -18,8 +18,8 @@
                      0 1 1 0]
                  :L [1 0 0 0
                      1 1 1 0]
-                 :J [0 0 1 0
-                     1 1 1 0]
+                 :J [1 1 1 0
+                     1 0 0 0]
                  :T [1 1 1 0
                      0 1 0 0]
                  })
@@ -64,18 +64,19 @@
         (when (= e 1) (draw-box g px py))))))
 
 
-(defn main-panel 
-  []
+(def game-loop 
+  (proxy [ActionListener] []
+    (actionPerformed [e]
+      (swap! ppy + 1)
+      (when (>= @ppy FIELD-HEIGHT) 
+        (do (reset! ppy 0)
+            (swap! bti #(mod (inc %) 7)))))))
+
+(def main-panel
   (proxy [JPanel ActionListener] []
     (paintComponent [g]
       (let [block-type (nth block-table @bti)]
-        (draw-block g @ppx @ppy @angl block-type)
-        (swap! ppy + 1)
-        (println @ppy)
-        (when (>= @ppy FIELD-HEIGHT) 
-          (do (reset! ppy 0)
-              (swap! bti #(mod (inc %) 7))))
-        ))
+        (draw-block g @ppx @ppy @angl block-type)))
     (actionPerformed [e]
       (.repaint this))))
 
@@ -91,16 +92,14 @@
 
 (defn -main
   [& args]
-  (let [panel (main-panel) 
-        frame (JFrame. "Test Paint")
-        timer (Timer. 500 panel)]
-    (doto panel
-      (.setFocusable true)
-      (.addKeyListener klistn))
-    (doto frame
-      (.add panel)
-      (.pack)
-      (.setDefaultCloseOperation JFrame/EXIT_ON_CLOSE)
-      (.setSize (* FIELD-WIDTH BLOCK-SIZE) (* FIELD-HEIGHT BLOCK-SIZE))
-      (.setVisible true))
-    (.start timer)))
+  (doto main-panel
+    (.setFocusable true)
+    (.addKeyListener klistn))
+  (doto (JFrame. "Teetris!!!")
+    (.add main-panel)
+    (.pack)
+    (.setDefaultCloseOperation JFrame/EXIT_ON_CLOSE)
+    (.setSize (* FIELD-WIDTH BLOCK-SIZE) (* FIELD-HEIGHT BLOCK-SIZE))
+    (.setVisible true))
+  (.start (Timer. 200 main-panel))
+  (.start (Timer. 500 game-loop)))
