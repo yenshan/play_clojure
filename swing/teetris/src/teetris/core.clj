@@ -65,29 +65,44 @@
 (defn cal-v-p [i y] (cal-v i y +))
 (defn cal-v-m [i y] (cal-v i y -))
 
+(defn next-x
+  [x i angl]
+  (let [opx ({0 cal-h-p, 90 cal-v-p, 180 cal-h-m, 270 cal-v-m} angl)]
+    (opx i x)))
+
+(defn next-y
+  [y i angl]
+  (let [opy ({0 cal-v-p, 90 cal-h-m, 180 cal-v-m, 270 cal-h-p} angl)]
+    (opy i y)))
+
 (defn draw-block
   [g blk]
   (let [{x :x y :y angl :angle typ :type} blk
         col (block-type typ)]
     (doseq [i (range 0 (count col))]
       (let [e (nth col i)
-            opx ({0 cal-h-p, 90 cal-v-p, 180 cal-h-m, 270 cal-v-m} angl)
-            opy ({0 cal-v-p, 90 cal-h-m, 180 cal-v-m, 270 cal-h-p} angl)
-            px (opx i x)
-            py (opy i y)]
+            px (next-x x i angl)
+            py (next-y y i angl)]
         (when (= e 1) (draw-box g px py))))))
+
+(defn set-block-to-fld
+  [fld blk i]
+  (let [{x :x y :y angl :angle typ :type} blk
+        col (block-type typ)
+        e (if (< (count col)) (nth col i) 0)
+        px (next-x x i angl)
+        py (next-y y i angl)]
+    (if (= e 1) 
+      (set-block fld px py)
+      fld)))
 
 (defn put-block
   [fld blk]
-  (let [{x :x y :y angl :angle typ :type} blk
-        col (block-type typ)]
-    (doseq [i (range 0 (count col))]
-      (let [e (nth col i)
-            opx ({0 cal-h-p, 90 cal-v-p, 180 cal-h-m, 270 cal-v-m} angl)
-            opy ({0 cal-v-p, 90 cal-h-m, 180 cal-v-m, 270 cal-h-p} angl)
-            px (opx i x)
-            py (opy i y)]
-        (when (= e 1) (swap! field set-block px py))))))
+    (loop [i 0, fld_ fld]
+      (if (>= i 8)
+          fld_
+          (let [fld2 (set-block-to-fld fld_ blk i)]
+            (recur (inc i) fld2)))))
 
 (defn draw-field
   [g col]
@@ -100,9 +115,10 @@
 (def game-loop 
   (proxy [ActionListener] []
     (actionPerformed [e]
-      (if (< (:y @block) FIELD-HEIGHT)
+      (if (< (:y @block) 18)
         (swap! block update :y inc)
         (do
+          (swap! field put-block @block)
           (swap! block assoc :y 0)
           (swap! block update :type next-type)
           )))))
