@@ -30,7 +30,7 @@
 
 (defn pos->idx [x y] (-> y (* FIELD-WIDTH) (+ x)))
 
-(defn next-type
+(defn next-block-type
   [t]
   (let [tbl (keys block-type)
         nidx (-> tbl
@@ -43,21 +43,25 @@
 ;; pure functions for field
 ;;
 (defn has-box?
-  ([fld idx] (= 1 (nth fld idx)))
+  ([fld idx]
+   (let [v (nth fld idx)]
+     (if (= v 0) false v)))
   ([fld x y]
    (if (or (< x 0) (< y 0))
            false
            (has-box? fld (pos->idx x y)))))
 
 (defn set-box
-  [fld x y] (assoc fld (pos->idx x y) 1))
+  ([fld x y value] (assoc fld (pos->idx x y) value))
+  ([fld x y] (set-box fld x y 1)))
 
 (defn set-line
-  [fld line]
-  (loop [i 0 fld_ fld]
-    (if (>= i FIELD-WIDTH)
-      fld_
-      (recur (inc i) (set-box fld_ i line)))))
+  ([fld line value]
+   (loop [i 0 fld_ fld]
+     (if (>= i FIELD-WIDTH)
+       fld_
+       (recur (inc i) (set-box fld_ i line value)))))
+  ([fld line] (set-line fld line)))
 
 ;;
 ;; pure functions for block
@@ -133,13 +137,20 @@
 ;; 
 ;;
 (defn draw-box
-  [g x y]
-  (let [px (-> x (* BLOCK-SIZE) (+ 1))
-        py (-> y (* BLOCK-SIZE) (+ 1))
-        sz (- BLOCK-SIZE 2)]
-    (doto g 
-      (.setColor java.awt.Color/BLACK)
-      (.fillRect px py sz sz))))
+  [g x y typ]
+  (letfn [(draw [g px py sz]
+            (doto g 
+              (.setColor java.awt.Color/BLACK)
+              (.fillRect px py sz sz)))]
+    (if (= typ 1)
+      (draw g
+            (-> x (* BLOCK-SIZE) (+ 1))
+            (-> y (* BLOCK-SIZE) (+ 1))
+            (- BLOCK-SIZE 2))
+      (draw g
+            (* x BLOCK-SIZE)
+            (* y BLOCK-SIZE)
+            BLOCK-SIZE))))
 
 (defn draw-block
   [g blk]
@@ -148,15 +159,15 @@
       (let [e (block-nth blk i)
             px (next-x x i angl)
             py (next-y y i angl)]
-        (when (= e 1) (draw-box g px py))))))
+        (when (= e 1) (draw-box g px py 1))))))
 
 (defn draw-field
   [g col]
   (doseq [i (range 0 (count col))]
     (let [x (mod i FIELD-WIDTH)
           y (quot i FIELD-WIDTH)]
-      (when (has-box? col i)
-        (draw-box g x y)))))
+      (when-let [v (has-box? col i)]
+        (draw-box g x y v)))))
 
 (def game-loop 
   (proxy [ActionListener] []
@@ -168,7 +179,7 @@
           (do
             (swap! field put-block @block)
             (swap! block assoc :y 0)
-            (swap! block update :type next-type)
+            (swap! block update :type next-block-type)
             ))))))
 
 
@@ -194,7 +205,7 @@
 
 (defn -main
   [& args]
-  (swap! field set-line 18)
+  (swap! field set-line 18 2)
   (doto main-panel
     (.setFocusable true)
     (.addKeyListener klistn))
