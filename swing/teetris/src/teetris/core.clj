@@ -7,6 +7,7 @@
 (def FIELD-WIDTH 10)
 (def FIELD-HEIGHT 20)
 
+(def field (atom (-> (* FIELD-WIDTH FIELD-HEIGHT) (repeat 0) (vec))))
 (def block-type {
                  :I [1 1 1 1
                      0 0 0 0]
@@ -27,6 +28,14 @@
 (def block (atom {:x 5 :y 0 
                   :type :I :angle 0}))
 
+(defn pos->idx [x y] (-> y (* FIELD-WIDTH) (+ x)))
+(defn has-block?
+  ([fld idx] (= 1 (nth fld idx)))
+  ([fld x y] (= 1 (nth fld (pos->idx x y)))))
+
+(defn set-block
+  [fld x y] (assoc fld (pos->idx x y) 1))
+
 (defn next-type
   [t]
   (let [tbl (keys block-type)
@@ -37,12 +46,12 @@
 
 (defn draw-box
   [g x y]
-  (let [px (* x BLOCK-SIZE)
-        py (* y BLOCK-SIZE)
-        sz (- BLOCK-SIZE 1)]
-  (doto g 
-    (.setColor java.awt.Color/BLACK)
-    (.fillRect px py sz sz))))
+  (let [px (-> x (* BLOCK-SIZE) (+ 1))
+        py (-> y (* BLOCK-SIZE) (+ 1))
+        sz (- BLOCK-SIZE 2)]
+    (doto g 
+      (.setColor java.awt.Color/BLACK)
+      (.fillRect px py sz sz))))
 
 (defn cal-h
   [i x op] 
@@ -68,6 +77,26 @@
             py (opy i y)]
         (when (= e 1) (draw-box g px py))))))
 
+(defn put-block
+  [fld blk]
+  (let [{x :x y :y angl :angle typ :type} blk
+        col (block-type typ)]
+    (doseq [i (range 0 (count col))]
+      (let [e (nth col i)
+            opx ({0 cal-h-p, 90 cal-v-p, 180 cal-h-m, 270 cal-v-m} angl)
+            opy ({0 cal-v-p, 90 cal-h-m, 180 cal-v-m, 270 cal-h-p} angl)
+            px (opx i x)
+            py (opy i y)]
+        (when (= e 1) (swap! field set-block px py))))))
+
+(defn draw-field
+  [g col]
+  (doseq [i (range 0 (count col))]
+    (let [x (mod i FIELD-WIDTH)
+          y (quot i FIELD-WIDTH)]
+      (when (has-block? col i)
+        (draw-box g x y)))))
+
 (def game-loop 
   (proxy [ActionListener] []
     (actionPerformed [e]
@@ -84,7 +113,8 @@
 (def main-panel
   (proxy [JPanel ActionListener] []
     (paintComponent [g]
-        (draw-block g @block))
+      (draw-field g @field)
+      (draw-block g @block))
     (actionPerformed [e]
       (.repaint this))))
 
@@ -100,6 +130,7 @@
 
 (defn -main
   [& args]
+  (swap! field set-block 4 9)
   (doto main-panel
     (.setFocusable true)
     (.addKeyListener klistn))
