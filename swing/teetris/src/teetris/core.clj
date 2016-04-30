@@ -7,7 +7,8 @@
 (def FIELD-WIDTH 10)
 (def FIELD-HEIGHT 20)
 
-(def field (atom (->> (repeat FIELD-WIDTH 0) (vec) (repeat FIELD-HEIGHT) (vec))))
+(def field-line (vec (repeat FIELD-WIDTH 0)))
+(def field (atom (vec (repeat FIELD-HEIGHT field-line))))
 (def block-type {
                  :I [1 1 1 1
                      0 0 0 0]
@@ -107,7 +108,7 @@
     (some blk-i-hit-fld? (range (block-dat-size blk)))))
 
 ;;
-;; pure functions for field using block
+;; pure function for field
 ;;
 (defn put-block-on-field
   [fld blk]
@@ -118,7 +119,21 @@
       (let [[x y] (blki-to-pos blk i)
             v (block-nth blk i)]
         (recur (inc i) (set-box _fld x y v))))))
-      
+
+(defn is-filled?
+  [dat]
+  (= (reduce + dat) (count dat)))
+
+(defn remove-filled-line
+  [fld]
+  (let [fld2 (vec (filter #(not (is-filled? %)) fld))
+        dlt (- (count fld) (count fld2))]
+    (loop [_fld fld2
+           n dlt]
+      (if (<= n 0)
+        (vec _fld)
+        (recur (cons field-line _fld) (dec n))))))
+
 ;;
 ;; 
 ;;
@@ -170,7 +185,8 @@
           (reset! block next-block)
           (do
             (swap! field put-block-on-field @block)
-            (swap! block assoc :y 0)
+            (swap! field remove-filled-line)
+            (swap! block assoc :x 5 :y 0 :angle 0)
             (swap! block update :type next-block-type)
             ))))))
 
@@ -192,7 +208,7 @@
       (let [kc (.getKeyCode e)]
         (cond (= kc KeyEvent/VK_LEFT) (swap! block update :x dec)
               (= kc KeyEvent/VK_RIGHT) (swap! block update :x inc)
-              (= kc KeyEvent/VK_DOWN) (swap! block update :angle rotate-left))))
+              (= kc KeyEvent/VK_UP) (swap! block update :angle rotate-left))))
     (keyReleased [e])
     (keyTyped [e])))
 
