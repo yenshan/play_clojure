@@ -54,8 +54,9 @@
 
 (defn some-in-fld?
   [fld x y]
-  (and (>= x 0) (>= y 0)
-       (> (get-in fld [y x]) 0)))
+  (if (or (< x 0) (>= x FIELD-WIDTH))
+    true
+    (and (>= y 0) (> (get-in fld [y x]) 0))))
 
 ;;
 ;; pure functions for block
@@ -202,13 +203,25 @@
     (actionPerformed [e]
       (.repaint this))))
 
+(defn get-next-block
+  [blk tgt opr]
+  (let [_blk (update blk tgt opr)]
+    (when-not (blk-hit-fld? @field _blk) _blk)))
+
 (def klistn
   (proxy [KeyListener] []
     (keyPressed [e]
       (let [kc (.getKeyCode e)]
-        (cond (= kc KeyEvent/VK_LEFT) (swap! block update :x dec)
-              (= kc KeyEvent/VK_RIGHT) (swap! block update :x inc)
-              (= kc KeyEvent/VK_UP) (swap! block update :angle rotate-left))))
+        (cond 
+          (= kc KeyEvent/VK_LEFT) (when-let [blk (get-next-block @block :x dec)]
+                                    (reset! block blk))
+          (= kc KeyEvent/VK_RIGHT) (when-let [blk (get-next-block @block :x inc)]
+                                     (reset! block blk))
+          (= kc KeyEvent/VK_UP) (when-let [blk (get-next-block @block :angle rotate-left)]
+                                  (reset! block blk))
+          (= kc KeyEvent/VK_DOWN) (when-let [blk (get-next-block @block :y inc)]
+                                    (reset! block blk))
+          ))) 
     (keyReleased [e])
     (keyTyped [e])))
 
