@@ -28,9 +28,9 @@
 
 (def block (atom {:x 5 :y 0 
                   :type :I :angle 0}))
-
-(defn pos->idx [x y] (-> y (* FIELD-WIDTH) (+ x)))
-
+;;
+;; pure functions for block
+;;
 (defn next-block-type
   [t]
   (let [tbl (keys block-type)
@@ -40,27 +40,6 @@
                  (mod (count tbl)))]
     (nth tbl nidx)))
 
-
-;; ----------------------------------------------
-(defn set-box
-  [fld x y value] 
-  (if (and (> value 0) (>= x 0) (>= y 0))
-    (assoc-in fld [y x] value)
-    fld))
-
-(defn set-line
-  [fld y value]
-  (assoc fld y (vec (repeat FIELD-WIDTH value))))
-
-(defn some-in-fld?
-  [fld x y]
-  (if (or (< x 0) (>= x FIELD-WIDTH))
-    true
-    (and (>= y 0) (> (get-in fld [y x]) 0))))
-
-;;
-;; pure functions for block
-;;
 (defn block-dat-size
   [{typ :type}]
   (count (block-type typ)))
@@ -71,7 +50,6 @@
     (if (< i (count col))
       (nth col i)
       0)))
-
 ;;
 ;; pure functions for calc block drawing
 ;;  ex. [0 1 1 0
@@ -99,6 +77,24 @@
   [blk i]
   (let [{x :x y :y angl :angle} blk]
     [(next-x x i angl) (next-y y i angl)]))
+;;
+;; pure function for field
+;;
+(defn put-box
+  [fld x y value] 
+  (if (and (> value 0) (>= x 0) (>= y 0))
+    (assoc-in fld [y x] value)
+    fld))
+
+(defn set-line
+  [fld y value]
+  (assoc fld y (vec (repeat FIELD-WIDTH value))))
+
+(defn some-in-fld?
+  [fld x y]
+  (if (or (< x 0) (>= x FIELD-WIDTH))
+    true
+    (and (>= y 0) (> (get-in fld [y x]) 0))))
 
 (defn blk-hit-fld? 
   [fld blk]
@@ -108,9 +104,6 @@
                 (some-in-fld? fld x y))))]
     (some blk-i-hit-fld? (range (block-dat-size blk)))))
 
-;;
-;; pure function for field
-;;
 (defn put-block-on-field
   [fld blk]
   (loop [i 0
@@ -119,7 +112,7 @@
       _fld
       (let [[x y] (blki-to-pos blk i)
             v (block-nth blk i)]
-        (recur (inc i) (set-box _fld x y v))))))
+        (recur (inc i) (put-box _fld x y v))))))
 
 (defn is-filled?
   [dat]
@@ -134,8 +127,6 @@
       (if (<= n 0)
         (vec _fld)
         (recur (cons field-line _fld) (dec n))))))
-
-;;
 ;; 
 ;;
 (defn draw-box
@@ -177,7 +168,8 @@
       (do 
         (draw-line g i (nth fld i))
         (recur (inc i))))))
-
+;;
+;;
 (def game-loop 
   (proxy [ActionListener] []
     (actionPerformed [e]
@@ -191,9 +183,6 @@
             (swap! block update :type next-block-type)
             ))))))
 
-
-(defn rotate-left [angl] (-> angl (+ 90) (mod 360)))
-
 (def main-panel
   (proxy [JPanel ActionListener] []
     (paintComponent [g]
@@ -202,6 +191,8 @@
       )
     (actionPerformed [e]
       (.repaint this))))
+
+(defn rotate-left [angl] (-> angl (+ 90) (mod 360)))
 
 (defn get-next-block
   [blk tgt opr]
