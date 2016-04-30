@@ -26,8 +26,7 @@
                      0 1 0 0]
                  })
 
-(def block (atom {:x 5 :y 0 
-                  :type :I :angle 0}))
+(def block (atom {:x 5 :y 0 :type :I :angle 0}))
 ;;
 ;; pure functions for block
 ;;
@@ -136,7 +135,7 @@
               (.setColor java.awt.Color/BLACK)
               (.fillRect px py sz sz)))]
     (if (= typ 1)
-      (draw g
+      (draw g 
             (-> x (* BLOCK-SIZE) (+ 1))
             (-> y (* BLOCK-SIZE) (+ 1))
             (- BLOCK-SIZE 2))
@@ -156,20 +155,16 @@
 
 (defn draw-line
   [g y dat]
-  (doseq [i (range 0 (count dat))]
+  (doseq [i (range (count dat))]
     (let [v (nth dat i)]
       (when (> v 0)
         (draw-box g i y v)))))
 
 (defn draw-field
   [g fld]
-  (loop [i 0]
-    (if (< i (count fld))
-      (do 
-        (draw-line g i (nth fld i))
-        (recur (inc i))))))
-;;
-;;
+  (doseq [i (range (count fld))]
+    (draw-line g i (nth fld i))))
+
 (def game-loop 
   (proxy [ActionListener] []
     (actionPerformed [e]
@@ -177,42 +172,39 @@
         (if-not (blk-hit-fld? @field next-block)
           (reset! block next-block)
           (do
-            (swap! field put-block-on-field @block)
-            (swap! field remove-filled-line)
-            (swap! block assoc :x 5 :y 0 :angle 0)
-            (swap! block update :type next-block-type)
+            (reset! field (-> @field
+                              (put-block-on-field @block)
+                              (remove-filled-line)))
+            (reset! block (-> @block
+                              (assoc :x 5 :y 0 :angle 0)
+                              (update :type next-block-type)))
             ))))))
 
 (def main-panel
   (proxy [JPanel ActionListener] []
     (paintComponent [g]
       (draw-field g @field)
-      (draw-fall-block g @block)
-      )
+      (draw-fall-block g @block))
     (actionPerformed [e]
       (.repaint this))))
 
 (defn rotate-left [angl] (-> angl (+ 90) (mod 360)))
 
-(defn get-next-block
+(defn change-and-reset!
   [blk tgt opr]
-  (let [_blk (update blk tgt opr)]
-    (when-not (blk-hit-fld? @field _blk) _blk)))
+  (let [_blk (update @blk tgt opr)]
+    (when-not (blk-hit-fld? @field _blk)
+      (reset! blk _blk))))
 
 (def klistn
   (proxy [KeyListener] []
     (keyPressed [e]
-      (let [kc (.getKeyCode e)]
-        (cond 
-          (= kc KeyEvent/VK_LEFT) (when-let [blk (get-next-block @block :x dec)]
-                                    (reset! block blk))
-          (= kc KeyEvent/VK_RIGHT) (when-let [blk (get-next-block @block :x inc)]
-                                     (reset! block blk))
-          (= kc KeyEvent/VK_UP) (when-let [blk (get-next-block @block :angle rotate-left)]
-                                  (reset! block blk))
-          (= kc KeyEvent/VK_DOWN) (when-let [blk (get-next-block @block :y inc)]
-                                    (reset! block blk))
-          ))) 
+      (condp = (.getKeyCode e)
+        KeyEvent/VK_LEFT (change-and-reset! block :x dec)
+        KeyEvent/VK_RIGHT (change-and-reset! block :x inc)
+        KeyEvent/VK_UP (change-and-reset! block :angle rotate-left)
+        KeyEvent/VK_DOWN (change-and-reset! block :y inc)
+        )) 
     (keyReleased [e])
     (keyTyped [e])))
 
