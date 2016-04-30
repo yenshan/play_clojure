@@ -7,7 +7,7 @@
 (def FIELD-WIDTH 10)
 (def FIELD-HEIGHT 20)
 
-(def field2 (atom (->> (repeat FIELD-WIDTH 0) (vec) (repeat FIELD-HEIGHT) (vec))))
+(def field (atom (->> (repeat FIELD-WIDTH 0) (vec) (repeat FIELD-HEIGHT) (vec))))
 (def block-type {
                  :I [1 1 1 1
                      0 0 0 0]
@@ -26,7 +26,7 @@
                  })
 
 (def block (atom {:x 5 :y 0 
-                  :type :L :angle 0}))
+                  :type :I :angle 0}))
 
 (defn pos->idx [x y] (-> y (* FIELD-WIDTH) (+ x)))
 
@@ -41,12 +41,13 @@
 
 
 ;; ----------------------------------------------
-(defn set-box2
+(defn set-box
   [fld x y value] 
-  (and (>= x 0) (>= y 0)
-       (assoc-in fld [y x] value)))
+  (if (and (> value 0) (>= x 0) (>= y 0))
+    (assoc-in fld [y x] value)
+    fld))
 
-(defn set-line2
+(defn set-line
   [fld y value]
   (assoc fld y (vec (repeat FIELD-WIDTH value))))
 
@@ -100,8 +101,9 @@
 (defn blk-hit-fld? 
   [fld blk]
   (letfn [(blk-i-hit-fld? [i]
-            (let [[x y] (blki-to-pos blk i)]
-              (some-in-fld? fld x y)))]
+            (when (> (block-nth blk i) 0) 
+              (let [[x y] (blki-to-pos blk i)]
+                (some-in-fld? fld x y))))]
     (some blk-i-hit-fld? (range (block-dat-size blk)))))
 
 ;;
@@ -115,7 +117,7 @@
       _fld
       (let [[x y] (blki-to-pos blk i)
             v (block-nth blk i)]
-        (recur (inc i) (set-box2 _fld x y v))))))
+        (recur (inc i) (set-box _fld x y v))))))
       
 ;;
 ;; 
@@ -152,7 +154,7 @@
       (when (> v 0)
         (draw-box g i y v)))))
 
-(defn draw-field2
+(defn draw-field
   [g fld]
   (loop [i 0]
     (if (< i (count fld))
@@ -164,10 +166,10 @@
   (proxy [ActionListener] []
     (actionPerformed [e]
       (let [next-block (update @block :y inc)]
-        (if-not (blk-hit-fld? @field2 next-block)
+        (if-not (blk-hit-fld? @field next-block)
           (reset! block next-block)
           (do
-            (swap! field2 put-block-on-field @block)
+            (swap! field put-block-on-field @block)
             (swap! block assoc :y 0)
             (swap! block update :type next-block-type)
             ))))))
@@ -178,7 +180,7 @@
 (def main-panel
   (proxy [JPanel ActionListener] []
     (paintComponent [g]
-      (draw-field2 g @field2)
+      (draw-field g @field)
       (draw-fall-block g @block)
       )
     (actionPerformed [e]
@@ -194,7 +196,7 @@
     (keyReleased [e])
     (keyTyped [e])))
 
-(defn make-bottom-line [] (swap! field2 set-line2 19 2))
+(defn make-bottom-line [] (swap! field set-line 19 2))
 
 (defn -main
   [& args]
