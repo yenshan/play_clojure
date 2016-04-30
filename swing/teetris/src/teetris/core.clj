@@ -8,7 +8,6 @@
 (def FIELD-HEIGHT 20)
 
 (def field2 (atom (->> (repeat FIELD-WIDTH 0) (vec) (repeat FIELD-HEIGHT) (vec))))
-(def field (atom (-> (* FIELD-WIDTH FIELD-HEIGHT) (repeat 0) (vec))))
 (def block-type {
                  :I [1 1 1 1
                      0 0 0 0]
@@ -27,7 +26,7 @@
                  })
 
 (def block (atom {:x 5 :y 0 
-                  :type :I :angle 0}))
+                  :type :L :angle 0}))
 
 (defn pos->idx [x y] (-> y (* FIELD-WIDTH) (+ x)))
 
@@ -40,34 +39,12 @@
                  (mod (count tbl)))]
     (nth tbl nidx)))
 
-;;
-;; pure functions for field
-;;
-(defn has-box?
-  ([fld idx]
-   (let [v (nth fld idx)]
-     (if (= v 0) false v)))
-  ([fld x y]
-   (if (or (< x 0) (< y 0))
-           false
-           (has-box? fld (pos->idx x y)))))
-
-(defn set-box
-  ([fld x y value] (assoc fld (pos->idx x y) value))
-  ([fld x y] (set-box fld x y 1)))
-
-
-(defn set-line
-  ([fld line value]
-   (loop [i 0 fld_ fld]
-     (if (>= i FIELD-WIDTH)
-       fld_
-       (recur (inc i) (set-box fld_ i line value)))))
-  ([fld line] (set-line fld line)))
 
 ;; ----------------------------------------------
 (defn set-box2
-  [fld x y value] (assoc-in fld [y x] value))
+  [fld x y value] 
+  (and (>= x 0) (>= y 0)
+       (assoc-in fld [y x] value)))
 
 (defn set-line2
   [fld y value]
@@ -75,7 +52,8 @@
 
 (defn some-in-fld?
   [fld x y]
-  (> (get-in fld [y x]) 0))
+  (and (>= x 0) (>= y 0)
+       (> (get-in fld [y x]) 0)))
 
 ;;
 ;; pure functions for block
@@ -120,51 +98,25 @@
     [(next-x x i angl) (next-y y i angl)]))
 
 (defn blk-hit-fld? 
-  [blk fld]
-  (loop [i 0]
-    (if (>= i (count blk))
-      false
-      (let [[x y] (blki-to-pos blk i)]
-        (if (some-in-fld? fld x y)
-          true
-          (recur (inc i)))))))
+  [fld blk]
+  (letfn [(blk-i-hit-fld? [i]
+            (let [[x y] (blki-to-pos blk i)]
+              (some-in-fld? fld x y)))]
+    (some blk-i-hit-fld? (range (block-dat-size blk)))))
 
 ;;
 ;; pure functions for field using block
 ;;
-(defn set-block-to-fld
-  [fld blk i]
-  (let [{x :x y :y angl :angle} blk
-        e (block-nth blk i)
-        px (next-x x i angl)
-        py (next-y y i angl)]
-    (if (= e 1) 
-      (set-box fld px py)
-      fld)))
-
-(defn put-block
+(defn put-block-on-field
   [fld blk]
-    (loop [i 0, fld_ fld]
-      (if (>= i (block-dat-size blk))
-          fld_
-          (let [fld2 (set-block-to-fld fld_ blk i)]
-            (recur (inc i) fld2)))))
-  
-(defn blk-e-hit? 
-  [fld blk i]
-  (let [{x :x y :y angl :angle} blk
-        e (block-nth blk i)
-        px (next-x x i angl)
-        py (next-y y i angl)]
-    (if (= e 1)
-      (has-box? fld px py)
-      false)))
-
-
-(defn blk-hit?
-  [fld blk]
-  (some #(blk-e-hit? fld blk %) (range (block-dat-size blk))))
-       
+  (loop [i 0
+         _fld fld]
+    (if (>= i (block-dat-size blk))
+      _fld
+      (let [[x y] (blki-to-pos blk i)
+            v (block-nth blk i)]
+        (recur (inc i) (set-box2 _fld x y v))))))
+      
 ;;
 ;; 
 ;;
@@ -196,8 +148,9 @@
 (defn draw-line
   [g y dat]
   (doseq [i (range 0 (count dat))]
-      (when-let [v (has-box? dat i)]
-        (draw-box g i y v))))
+    (let [v (nth dat i)]
+      (when (> v 0)
+        (draw-box g i y v)))))
 
 (defn draw-field2
   [g fld]
@@ -207,25 +160,16 @@
         (draw-line g i (nth fld i))
         (recur (inc i))))))
 
-;(defn draw-field
-;  [g fld]
-;  (doseq [i (range 0 (count fld))]
-;    (let [x (mod i FIELD-WIDTH)
-;          y (quot i FIELD-WIDTH)]
-;      (when-let [v (has-box? fld i)]
-;        (draw-box g x y v)))))
-
 (def game-loop 
   (proxy [ActionListener] []
     (actionPerformed [e]
-      (let [next-blk (update @block :y inc)]
-        ;(if (< (:y @block) 18)
-        (if-not (blk-hit? @field next-blk)
-          (swap! block update :y inc)
+      (let [next-block (update @block :y inc)]
+        (if-not (blk-hit-fld? @field2 next-block)
+          (reset! block next-block)
           (do
-      ;      (swap! field put-block @block)
-      ;      (swap! block assoc :y 0)
-      ;      (swap! block update :type next-block-type)
+            (swap! field2 put-block-on-field @block)
+            (swap! block assoc :y 0)
+            (swap! block update :type next-block-type)
             ))))))
 
 
@@ -250,7 +194,7 @@
     (keyReleased [e])
     (keyTyped [e])))
 
-(defn make-bottom-line [] (swap! field2 set-line2 18 2))
+(defn make-bottom-line [] (swap! field2 set-line2 19 2))
 
 (defn -main
   [& args]
@@ -262,7 +206,7 @@
     (.add main-panel)
     (.pack)
     (.setDefaultCloseOperation JFrame/EXIT_ON_CLOSE)
-    (.setSize (* FIELD-WIDTH BLOCK-SIZE) (* FIELD-HEIGHT BLOCK-SIZE))
+    (.setSize (* FIELD-WIDTH BLOCK-SIZE) (* (+ FIELD-HEIGHT 1) BLOCK-SIZE))
     (.setVisible true))
   (.start (Timer. 200 main-panel))
   (.start (Timer. 500 game-loop)))
