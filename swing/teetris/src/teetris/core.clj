@@ -172,13 +172,12 @@
         (if-not (blk-hit-fld? @field next-block)
           (reset! block next-block)
           (do
-            (reset! field (-> @field
+            (swap! field #(-> %
                               (put-block-on-field @block)
                               (remove-filled-line)))
-            (reset! block (-> @block
+            (swap! block #(-> %
                               (assoc :x 5 :y 0 :angle 0)
-                              (update :type next-block-type)))
-            ))))))
+                              (update :type next-block-type)))))))))
 
 (def main-panel
   (proxy [JPanel ActionListener] []
@@ -203,8 +202,7 @@
         KeyEvent/VK_LEFT (change-and-reset! block :x dec)
         KeyEvent/VK_RIGHT (change-and-reset! block :x inc)
         KeyEvent/VK_UP (change-and-reset! block :angle rotate-left)
-        KeyEvent/VK_DOWN (change-and-reset! block :y inc)
-        )) 
+        KeyEvent/VK_DOWN (change-and-reset! block :y inc))) 
     (keyReleased [e])
     (keyTyped [e])))
 
