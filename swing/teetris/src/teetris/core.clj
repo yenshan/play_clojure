@@ -9,27 +9,42 @@
 
 (def field-line (vec (repeat FIELD-WIDTH 0)))
 (def field (atom (vec (repeat FIELD-HEIGHT field-line))))
-(def block-type {
-                 :I [1 1 1 1
-                     0 0 0 0]
-                 :O [1 1 0 0
-                     1 1 0 0]
-                 :S [0 1 1 0
-                     1 1 0 0]
-                 :Z [1 1 0 0
-                     0 1 1 0]
-                 :L [1 0 0 0
-                     1 1 1 0]
-                 :J [1 1 1 0
-                     1 0 0 0]
-                 :T [1 1 1 0
-                     0 1 0 0]
-                 })
-
 (def block (atom {:x 5 :y 0 :type :I :angle 0}))
+
+(def block-type {
+                 :I [[0 0][0 1][0 2][0 3]]
+                 :O [[0 0][0 1][1 0][1 1]]
+                 :S [[0 0][0 1][1 1][1 2]]
+                 :Z [[0 0][0 1][-1 1][-1 2]]
+                 :L [[0 0][-1 0][-1 1][-1 2]]
+                 :J [[0 0][1 0][1 1][1 2]]
+                 :T [[0 0][1 0][2 0][1 1]]
+                 })
 ;;
 ;; pure functions for block
 ;;
+(def rotate-fn {
+                0 (fn [[x y]] [x y])
+                90 (fn [[x y]] [(* y -1) x])
+                180 (fn [[x y]] [(* x -1) (* y -1)])
+                270 (fn [[x y]] [y (* x -1)])
+                })
+
+(defn movepos
+  ([op [dx dy] blk-dat]
+   (map (fn [[x y]] [(op x dx) (op y dy)]) blk-dat))
+  ([op blk-dat]
+   (movepos op (nth blk-dat 1) blk-dat)))
+
+(defn get-block-dat
+  [typ angl]
+  (let [dat (block-type typ)]
+    (if (= typ :O)
+      dat
+      (->> dat
+           (movepos -) 
+           (map (rotate-fn angl))))))
+
 (defn next-block-type
   [t]
   (let [tbl (keys block-type)
@@ -38,47 +53,6 @@
                  (inc)
                  (mod (count tbl)))]
     (nth tbl nidx)))
-
-(defn block-dat-size
-  [{typ :type}]
-  (count (block-type typ)))
-
-(defn block-nth
-  [{typ :type} i]
-  (let [col (block-type typ)]
-    (if (< i (count col))
-      (nth col i)
-      0)))
-
-(defn block-dat [{typ :type}] (block-type typ))
-
-;;
-;; pure functions for calc block drawing
-;;  ex. [0 1 1 0
-;;       1 1 0 0]
-;;
-(defn cal-h [i x op] (-> i (mod 4) (->> (op x))))
-(defn cal-h-p [i x] (cal-h i x +))
-(defn cal-h-m [i x] (cal-h i x -))
-(defn cal-v [i y op] (if (< i 4) y (op y 1)))
-(defn cal-v-p [i y] (cal-v i y +))
-(defn cal-v-m [i y] (cal-v i y -))
-
-(defn next-x
-  [x i angl]
-  (let [opx ({0 cal-h-p, 90 cal-v-p, 180 cal-h-m, 270 cal-v-m} angl)]
-    (opx i x)))
-
-(defn next-y
-  [y i angl]
-  (let [opy ({0 cal-v-p, 90 cal-h-m, 180 cal-v-m, 270 cal-h-p} angl)]
-    (opy i y)))
-
-(defn blki-to-pos
-  "Convert index in block data to position data [x y]"
-  [blk i]
-  (let [{x :x y :y angl :angle} blk]
-    [(next-x x i angl) (next-y y i angl)]))
 ;;
 ;; pure function for field
 ;;
@@ -98,23 +72,20 @@
     true
     (and (>= y 0) (> (get-in fld [y x]) 0))))
 
-(defn blk-hit-fld? 
-  [fld blk]
-  (letfn [(blk-i-hit-fld? [i]
-            (when (> (block-nth blk i) 0) 
-              (let [[x y] (blki-to-pos blk i)]
-                (some-in-fld? fld x y))))]
-    (some blk-i-hit-fld? (range (block-dat-size blk)))))
+(defn blk-hit-fld?
+  [fld {x :x y :y typ :type angl :angle}]
+  (some (fn [[dx dy]] (some-in-fld? fld (+ x dx) (+ y dy)))
+        (get-block-dat typ angl)))
 
 (defn put-block-on-field
-  [fld blk]
-  (loop [i 0
-         _fld fld]
-    (if (>= i (block-dat-size blk))
-      _fld
-      (let [[x y] (blki-to-pos blk i)
-            v (block-nth blk i)]
-        (recur (inc i) (put-box _fld x y v))))))
+  [fld {x :x y :y typ :type angl :angle}]
+  (let [dat (movepos + [x y] (get-block-dat typ angl))]
+    (loop [col dat
+           _fld fld]
+      (if (empty? col)
+        _fld 
+        (let [[x y] (first col)]
+          (recur (rest col) (put-box _fld x y 1)))))))
 
 (defn is-filled?
   [dat]
@@ -130,6 +101,7 @@
         (vec _fld)
         (recur (cons field-line _fld) (dec n))))))
 ;; 
+;; functions for drawing
 ;;
 (defn draw-box
   [g x y typ]
@@ -148,51 +120,6 @@
             BLOCK-SIZE))))
 
 (defn draw-fall-block
-  [g blk]
-  (let [{x :x y :y angl :angle} blk]
-    (doseq [i (range (block-dat-size blk))]
-      (let [e (block-nth blk i)
-            px (next-x x i angl)
-            py (next-y y i angl)]
-        (when (= e 1) (draw-box g px py 1))))))
-
-(def block-type2 {
-                  :I [[0 0][0 1][0 2][0 3]]
-                  :O [[0 0][0 1][1 0][1 1]]
-                  :S [[0 0][0 1][1 1][1 2]]
-                  :Z [[0 0][0 1][-1 1][-1 2]]
-                  :L [[0 0][-1 0][-1 1][-1 2]]
-                  :J [[0 0][1 0][1 1][1 2]]
-                  :T [[0 0][1 0][2 0][1 1]]
-                  })
-
-(def rotate-fn {0 (fn [[x y]] [x y])
-                90 (fn [[x y]] [(* y -1) x])
-                180 (fn [[x y]] [(* x -1) (* y -1)])
-                270 (fn [[x y]] [y (* x -1)])
-                })
-
-
-(defn movepos
-  ([op blk-dat] (movepos op (nth blk-dat 1) blk-dat))
-  ([op [dx dy] blk-dat]
-  (map (fn [[x y]] [(op x dx) (op y dy)]) blk-dat)))
-
-(defn get-block-dat
-  [typ angl]
-  (let [dat (block-type2 typ)]
-    (if (= typ :O)
-      dat
-      (->> dat
-           (movepos -) 
-           (map (rotate-fn angl))))))
-
-(defn mul-blk
-  [[dx dy] blkd]
-    (map (fn [[x y]] [(* dx x) (* dy y)]) blkd))
-
-
-(defn draw-fall-block2
   [g {x :x y :y angl :angle typ :type}]
   (doall (map (fn [[dx dy]] (draw-box g (+ x dx) (+ y dy) 1))
               (get-block-dat typ angl))))
@@ -228,9 +155,7 @@
     (paintComponent [g]
       (proxy-super paintComponent g)
       (draw-field g @field)
-      (draw-fall-block2 g @block)
-      ;(draw-fall-block g @block)
-      )
+      (draw-fall-block g @block))
     (actionPerformed [e]
       (.repaint this))))
 
@@ -249,9 +174,7 @@
         KeyEvent/VK_LEFT (change-and-reset! block :x dec)
         KeyEvent/VK_RIGHT (change-and-reset! block :x inc)
         KeyEvent/VK_UP (change-and-reset! block :angle rotate-left)
-        KeyEvent/VK_DOWN (change-and-reset! block :y inc)
-        ;KeyEvent/VK_DOWN (change-and-reset! block :type next-block-type)
-        )) 
+        KeyEvent/VK_DOWN (change-and-reset! block :y inc))) 
     (keyReleased [e])
     (keyTyped [e])))
 
