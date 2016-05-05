@@ -156,6 +156,47 @@
             py (next-y y i angl)]
         (when (= e 1) (draw-box g px py 1))))))
 
+(def block-type2 {
+                  :I [[0 0][0 1][0 2][0 3]]
+                  :O [[0 0][0 1][1 0][1 1]]
+                  :S [[0 0][0 1][1 1][1 2]]
+                  :Z [[0 0][0 1][-1 1][-1 2]]
+                  :L [[0 0][-1 0][-1 1][-1 2]]
+                  :J [[0 0][1 0][1 1][1 2]]
+                  :T [[0 0][1 0][2 0][1 1]]
+                  })
+
+(def rotate-fn {0 (fn [[x y]] [x y])
+                90 (fn [[x y]] [(* y -1) x])
+                180 (fn [[x y]] [(* x -1) (* y -1)])
+                270 (fn [[x y]] [y (* x -1)])
+                })
+
+
+(defn movepos
+  ([op blk-dat] (movepos op (nth blk-dat 1) blk-dat))
+  ([op [dx dy] blk-dat]
+  (map (fn [[x y]] [(op x dx) (op y dy)]) blk-dat)))
+
+(defn get-block-dat
+  [typ angl]
+  (let [dat (block-type2 typ)]
+    (if (= typ :O)
+      dat
+      (->> dat
+           (movepos -) 
+           (map (rotate-fn angl))))))
+
+(defn mul-blk
+  [[dx dy] blkd]
+    (map (fn [[x y]] [(* dx x) (* dy y)]) blkd))
+
+
+(defn draw-fall-block2
+  [g {x :x y :y angl :angle typ :type}]
+  (doall (map (fn [[dx dy]] (draw-box g (+ x dx) (+ y dy) 1))
+              (get-block-dat typ angl))))
+
 (defn draw-line
   [g y dat]
   (doseq [i (range (count dat))]
@@ -187,7 +228,9 @@
     (paintComponent [g]
       (proxy-super paintComponent g)
       (draw-field g @field)
-      (draw-fall-block g @block))
+      (draw-fall-block2 g @block)
+      ;(draw-fall-block g @block)
+      )
     (actionPerformed [e]
       (.repaint this))))
 
@@ -206,7 +249,9 @@
         KeyEvent/VK_LEFT (change-and-reset! block :x dec)
         KeyEvent/VK_RIGHT (change-and-reset! block :x inc)
         KeyEvent/VK_UP (change-and-reset! block :angle rotate-left)
-        KeyEvent/VK_DOWN (change-and-reset! block :y inc))) 
+        KeyEvent/VK_DOWN (change-and-reset! block :y inc)
+        ;KeyEvent/VK_DOWN (change-and-reset! block :type next-block-type)
+        )) 
     (keyReleased [e])
     (keyTyped [e])))
 
