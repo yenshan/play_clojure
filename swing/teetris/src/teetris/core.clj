@@ -49,6 +49,9 @@
     (if (< i (count col))
       (nth col i)
       0)))
+
+(defn block-dat [{typ :type}] (block-type typ))
+
 ;;
 ;; pure functions for calc block drawing
 ;;  ex. [0 1 1 0
@@ -182,6 +185,7 @@
 (def main-panel
   (proxy [JPanel ActionListener] []
     (paintComponent [g]
+      (proxy-super paintComponent g)
       (draw-field g @field)
       (draw-fall-block g @block))
     (actionPerformed [e]
