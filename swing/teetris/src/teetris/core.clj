@@ -74,8 +74,8 @@
 
 (defn blk-hit-fld?
   [fld {x :x y :y typ :type angl :angle}]
-  (some (fn [[dx dy]] (some-in-fld? fld (+ x dx) (+ y dy)))
-        (get-block-dat typ angl)))
+  (some (fn [[x y]] (some-in-fld? fld x y))
+        (movepos + [x y] (get-block-dat typ angl))))
 
 (defn put-block-on-field
   [fld {x :x y :y typ :type angl :angle}]
@@ -121,8 +121,8 @@
 
 (defn draw-fall-block
   [g {x :x y :y angl :angle typ :type}]
-  (doall (map (fn [[dx dy]] (draw-box g (+ x dx) (+ y dy) 1))
-              (get-block-dat typ angl))))
+  (doall (map (fn [[x y]] (draw-box g x y 1))
+              (movepos + [x y] (get-block-dat typ angl)))))
 
 (defn draw-line
   [g y dat]
