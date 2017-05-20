@@ -1,0 +1,9 @@
+(use 'expt.core :reload)
+(-main)
+(use 'expt.core :reload)
+(-main)
+(use 'expt.core :reload)
+(-main)
+(use 'expt.core :reload)
+(-main)
+exit
