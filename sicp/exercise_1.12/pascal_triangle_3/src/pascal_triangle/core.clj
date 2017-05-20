@@ -11,11 +11,11 @@
            vec)))
 
 (defn pascal-triangle
-  ([n] (pascal-triangle [1] [] n))
-  ([x col n]
+  ([n] (pascal-triangle n [1] []))
+  ([n a b]
     (if (zero? n)
-      col
-      (recur (next-row x) (conj col x) (dec n)))))
+      b
+      (recur (dec n) (next-row a) (conj b a)))))
 
 
 (defn -main
