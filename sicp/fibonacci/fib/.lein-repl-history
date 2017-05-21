@@ -1,0 +1,5 @@
+(fib 10)
+(use 'fib.core :reload)
+(fib 10)
+(use 'fib.core :reload)
+(-main)
