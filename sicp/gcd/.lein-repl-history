@@ -1,0 +1,24 @@
+ls
+(/ 1 2)
+(mod 1 2)
+(mod 10 2)
+(mod / 2)
+(/ 10.0 2)
+(/ 10 2)
+(/ 10 3)
+(/ 10 3.0)
+(rem 10 3)
+(defn gcd [a b]
+(if (zero? b)
+a
+(gcd b (rem a b))))
+(gcd 206 40)
+(use 'gcd.core :reload)
+(-main)
+(use 'gcd.core :reload)
+(remainder 10 3)
+(remainder 9 3)
+(remainder 8 3)
+(use 'gcd.core :reload)
+(-main)
+exit
