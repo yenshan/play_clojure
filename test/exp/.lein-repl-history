@@ -1,0 +1,17 @@
+(exp 2 2)
+(:use 'exp.core :reload)
+(exp 2 2)
+exit
+(exp 2 2)
+(exp2 2 2)
+(exp2 2 10)
+(exp3 2 10)
+(exp3 2 100)
+(exp3 2 10)
+(exp3 2N 10)
+(exp3 2N 100)
+(iter-exp 3 3)
+(fast-exp 3 3)
+(-main)
+(expmod 2 3 3)
+exit
