@@ -7,14 +7,14 @@
     :else (* base (exp base (dec e)))))
 
 (defn iter-exp
-  ([base e] (exp2 base e 1))
+  ([base e] (iter-exp base e 1))
   ([base e res]
    (cond
      (zero? e) res
      :else (recur base (dec e) (* base res)))))
 
 (defn fast-exp
-  ([base e] (exp3 base e 1N))
+  ([base e] (fast-exp base e 1N))
   ([base e res]
    (cond
      (zero? e) res
