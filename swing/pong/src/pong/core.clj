@@ -1,45 +1,55 @@
 (ns pong.core
   (:import [javax.swing JFrame JPanel Timer]
-           [java.awt.event ActionListener KeyListener KeyEvent])
+           [java.awt.event ActionListener KeyListener KeyEvent]
+           [java.awt Color])
   (:gen-class))
 
-(def ball (atom {:x 10 :y 10 
-                 :w 10 :h 10
-                 :vx 1 :vy 1
-                 :color java.awt.Color/BLACK
-                 :draw #(.fillOval %1 %2 %3 %4 %5)
-                 }))
 
-(def bar (atom {:x 200 :y 300
-                 :w 50 :h 10
-                 :color java.awt.Color/BLUE
-                 :draw #(.fillRect %1 %2 %3 %4 %5)
-                 :ref-v :vy
-                 }))
+(defn create-ball [x y]
+  {:x x :y y 
+   :w 10 :h 10
+   :vx 1 :vy 1
+   :color Color/BLACK
+   :draw #(.fillOval %1 %2 %3 %4 %5)
+   })
 
-(def walls [{:x 0   :y 0   :w 1   :h 400 :ref-v :vx} ;left wall
-            {:x 390 :y 0   :w 1   :h 400 :ref-v :vx} ;right wall
-            {:x 0   :y 0   :w 400 :h 1 :ref-v :vy}   ;top wall
-            {:x 0   :y 390 :w 400 :h 1 :ref-v :vy}   ;bottom wall
-            ])
+(def ball (atom (create-ball 10 10)))
+
+(defn create-bar [x y]
+  {:x x :y y
+   :w 50 :h 10
+   :color Color/BLUE
+   :draw #(.fillRect %1 %2 %3 %4 %5)
+   :ref-v :vy
+   })
+
+(def bar (atom (create-bar 200 300)))
+
+(defrecord Wall [x y w h ref-v])
+
+(def walls [(Wall. 0 0 1 100 :vx)
+            (Wall. 390 0 1 400 :vx)
+            (Wall. 0 0 400 1 :vy)
+            (Wall. 0 390 400 1 :vy)])
 
 (defn move-by-velocity
-  [obj]
-  (let [{x :x y :y vx :vx vy :vy} obj]
-    (assoc obj :x (+ x vx) :y (+ y vy))))
+  [{:keys [x y vx vy] :as obj}]
+  (assoc obj :x (+ x vx) :y (+ y vy)))
 
-(defn four-pos [{x :x y :y w :w h :h}] [x y (+ x w) (+ y h)])
+
+(defn rect-hit? [[tx1 ty1 bx1 by1] [tx2 ty2 bx2 by2]]
+  (not (or (< bx1 tx2) (< by1 ty2) (< bx2 tx1) (< by2 ty1))))
 
 (defn hit?
   [obj1 obj2]
-  (let [[tx1 ty1 bx1 by1] (four-pos obj1)
-        [tx2 ty2 bx2 by2] (four-pos obj2)]
-    (not (or (< bx1 tx2) (< by1 ty2) (< bx2 tx1) (< by2 ty1)))))
+  (letfn [(->pos [{:keys [x y w h]}] [x y (+ x w) (+ y h)])]
+    (rect-hit? (->pos obj1) (->pos obj2))))
+
 
 (defn turn-if-hit
   [bal bar]
   (let [vt (:ref-v bar)
-        v (vt bal)]
+        v (get bal vt)]
     (if (hit? bal bar)
       (assoc bal vt (- v))
       bal)))
@@ -62,11 +72,9 @@
          (reset! dat))))
       
 (defn draw
-  [g obj]
-  (let [{x :x y :y w :w h :h} obj]
-    (doto g 
-      (.setColor (:color obj))
-      ((:draw obj) x y w h))))
+  [g {:keys [x y w h color draw]}]
+      (.setColor g color)
+      (draw g x y w h))
 
 (defn main-panel 
   []
@@ -94,12 +102,11 @@
 (defn -main
   [& args]
   (let [panel (main-panel) 
-        frame (JFrame. "Test Paint")
         timer (Timer. 10 panel)]
     (doto panel
       (.setFocusable true)
       (.addKeyListener klistn))
-    (doto frame
+    (doto (JFrame. "Test Paint")
       (.add panel)
       (.pack)
       (.setDefaultCloseOperation JFrame/EXIT_ON_CLOSE)
