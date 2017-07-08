@@ -45,7 +45,6 @@
   (letfn [(->pos [{:keys [x y w h]}] [x y (+ x w) (+ y h)])]
     (rect-hit? (->pos obj1) (->pos obj2))))
 
-
 (defn turn-if-hit
   [bal bar]
   (let [vt (:ref-v bar)
@@ -53,6 +52,25 @@
     (if (hit? bal bar)
       (assoc bal vt (- v))
       bal)))
+
+; TODO
+;
+;(defn reverse-velocity [obj v]
+;  (assoc obj v (- (get obj v))))
+;
+;(defn turn-if-hit [bal col]
+;  (let [obj (some #(if (hit? bal %) %) col)]
+;    (if-not (nil? obj)
+;      (reverse-velocity bal (:ref-v obj)))))
+;
+;(defn move-ball!
+;  [bal]
+;  (let [objs (cons @bar walls)
+;    (if-not (nil? obj)
+;      (reset! ball (-> @ball 
+;                     (move-by-velocity)
+;                     (collision-check objs)
+;                     ))))
 
 (defn move-ball!
   [bal]
@@ -63,54 +81,45 @@
                      (collision-check objs)
                      ))))
 
-(defn move-bar!
-  [dat dr]
-  (let [d (dr {:left - :right +})
-        x (:x @dat)]
-    (->> (d x 5)
-         (assoc @dat :x)
-         (reset! dat))))
+(defn move-bar [bar e]
+  (letfn [(move-x [opr dx] (assoc bar :x (opr (:x bar) dx)))]
+    (condp = e
+      KeyEvent/VK_LEFT (move-x - 5)
+      KeyEvent/VK_RIGHT (move-x + 5))))
       
 (defn draw
   [g {:keys [x y w h color draw]}]
       (.setColor g color)
       (draw g x y w h))
 
-(defn main-panel 
-  []
+(defn create-panel []
   (proxy [JPanel ActionListener] []
     (paintComponent [g]
-      (let [w (proxy-super getWidth)
-            h (proxy-super getHeight)]
-        (move-ball! ball)
-        (proxy-super paintComponent  g)
-        (draw g @ball)
-        (draw g @bar)
-        ))
+      (proxy-super paintComponent g)
+      (draw g @ball)
+      (draw g @bar))
     (actionPerformed [e]
+      (move-ball! ball)
       (.repaint this))))
 
-(def klistn
+(def listener
   (proxy [KeyListener] []
     (keyPressed [e]
-      (let [kc (.getKeyCode e)]
-        (cond (= kc KeyEvent/VK_LEFT) (move-bar! bar :left)
-              (= kc KeyEvent/VK_RIGHT) (move-bar! bar :right))))
+       (swap! bar move-bar (.getKeyCode e)))
     (keyReleased [e])
     (keyTyped [e])))
 
 (defn -main
   [& args]
-  (let [panel (main-panel) 
-        timer (Timer. 10 panel)]
+  (let [panel (create-panel)]
     (doto panel
       (.setFocusable true)
-      (.addKeyListener klistn))
+      (.addKeyListener listener))
     (doto (JFrame. "Test Paint")
       (.add panel)
       (.pack)
       (.setDefaultCloseOperation JFrame/EXIT_ON_CLOSE)
       (.setSize 400 400)
       (.setVisible true))
-    (.start timer)))
+    (.start (Timer. 10 panel))))
 
