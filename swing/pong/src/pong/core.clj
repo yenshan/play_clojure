@@ -4,106 +4,79 @@
            [java.awt Color])
   (:gen-class))
 
-
 (defn create-ball [x y]
-  {:x x :y y 
-   :w 10 :h 10
-   :vx 1 :vy 1
+  {:pos [x y]
+   :size [10 10]
+   :v [-1 1]
    :color Color/BLACK
    :draw #(.fillOval %1 %2 %3 %4 %5)
    })
 
-(def ball (atom (create-ball 10 10)))
+(def ball (atom (create-ball 100 10)))
 
 (defn create-bar [x y]
-  {:x x :y y
-   :w 50 :h 10
+  {:pos [x y]
+   :size [50 10]
    :color Color/BLUE
    :draw #(.fillRect %1 %2 %3 %4 %5)
-   :ref-v :vy
+   :dv [1 -1] 
    })
 
 (def bar (atom (create-bar 200 300)))
 
-(defrecord Wall [x y w h ref-v])
+(defrecord Wall [pos size dv])
 
-(def walls [(Wall. 0 0 1 100 :vx)
-            (Wall. 390 0 1 400 :vx)
-            (Wall. 0 0 400 1 :vy)
-            (Wall. 0 390 400 1 :vy)])
+(def walls [(->Wall [0 0]   [1 400] [-1 1]) ; Left
+            (->Wall [400 0] [1 400] [-1 1]) ; Right
+            (->Wall [0 0]   [400 1] [1 -1]) ; Top
+            (->Wall [0 400] [400 1] [1 -1])]) ; Bottom
 
 (defn move-by-velocity
-  [{:keys [x y vx vy] :as obj}]
-  (assoc obj :x (+ x vx) :y (+ y vy)))
-
+  [{:keys [pos v] :as obj}]
+  (assoc obj :pos (map + pos v)))
 
 (defn rect-hit? [[tx1 ty1 bx1 by1] [tx2 ty2 bx2 by2]]
   (not (or (< bx1 tx2) (< by1 ty2) (< bx2 tx1) (< by2 ty1))))
 
-(defn hit?
-  [obj1 obj2]
-  (letfn [(->pos [{:keys [x y w h]}] [x y (+ x w) (+ y h)])]
-    (rect-hit? (->pos obj1) (->pos obj2))))
+(defn hit? [obj1 obj2]
+  (letfn [(->rect [{[x y] :pos [w h] :size}] [x y (+ x w) (+ y h)])]
+    (rect-hit? (->rect obj1) (->rect obj2))))
 
-(defn turn-if-hit
-  [bal bar]
-  (let [vt (:ref-v bar)
-        v (get bal vt)]
-    (if (hit? bal bar)
-      (assoc bal vt (- v))
-      bal)))
+(defn some-hit [bal col] 
+  (some #(if (hit? bal %) %) col))
 
-; TODO
-;
-;(defn reverse-velocity [obj v]
-;  (assoc obj v (- (get obj v))))
-;
-;(defn turn-if-hit [bal col]
-;  (let [obj (some #(if (hit? bal %) %) col)]
-;    (if-not (nil? obj)
-;      (reverse-velocity bal (:ref-v obj)))))
-;
-;(defn move-ball!
-;  [bal]
-;  (let [objs (cons @bar walls)
-;    (if-not (nil? obj)
-;      (reset! ball (-> @ball 
-;                     (move-by-velocity)
-;                     (collision-check objs)
-;                     ))))
+(defn turn-dir [bal obj]
+  (assoc bal :v (map * (:v bal) (:dv obj))))
 
-(defn move-ball!
-  [bal]
-  (let [objs (cons @bar walls)
-        collision-check (partial reduce turn-if-hit)]
-    (reset! ball (-> @ball 
-                     (move-by-velocity)
-                     (collision-check objs)
-                     ))))
+(defn move-ball [ball objs]
+  (let [ball' (move-by-velocity ball)
+        obj (some-hit ball' objs)]
+    (if (nil? obj)
+      ball' 
+      (turn-dir ball obj))))
 
 (defn move-bar [bar e]
-  (letfn [(move-x [opr dx] (assoc bar :x (opr (:x bar) dx)))]
+  (letfn [(move- [d] (assoc bar :pos (map + d (:pos bar))))]
     (condp = e
-      KeyEvent/VK_LEFT (move-x - 5)
-      KeyEvent/VK_RIGHT (move-x + 5))))
+      KeyEvent/VK_LEFT (move- [-5 0])
+      KeyEvent/VK_RIGHT (move- [5 0]))))
       
 (defn draw
-  [g {:keys [x y w h color draw]}]
+  [g {[x y] :pos [w h] :size color :color draw :draw}]
       (.setColor g color)
       (draw g x y w h))
 
 (defn create-panel []
-  (proxy [JPanel ActionListener] []
+  (proxy [JPanel ActionListener KeyListener] []
     (paintComponent [g]
       (proxy-super paintComponent g)
       (draw g @ball)
       (draw g @bar))
+    ;; ActionListener
     (actionPerformed [e]
-      (move-ball! ball)
-      (.repaint this))))
-
-(def listener
-  (proxy [KeyListener] []
+      (swap! ball move-ball (cons @bar walls))
+      (.repaint this))
+    ;; KeyListener
     (keyPressed [e]
        (swap! bar move-bar (.getKeyCode e)))
     (keyReleased [e])
@@ -114,7 +87,7 @@
   (let [panel (create-panel)]
     (doto panel
       (.setFocusable true)
-      (.addKeyListener listener))
+      (.addKeyListener panel))
     (doto (JFrame. "Test Paint")
       (.add panel)
       (.pack)
