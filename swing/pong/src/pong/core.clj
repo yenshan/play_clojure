@@ -12,8 +12,6 @@
    :draw #(.fillOval %1 %2 %3 %4 %5)
    })
 
-(def ball (atom (create-ball 100 10)))
-
 (defn create-bar [x y]
   {:pos [x y]
    :size [50 10]
@@ -22,14 +20,12 @@
    :dv [1 -1] 
    })
 
-(def bar (atom (create-bar 200 300)))
-
 (defrecord Wall [pos size dv])
-
-(def walls [(->Wall [0 0]   [1 400] [-1 1]) ; Left
-            (->Wall [400 0] [1 400] [-1 1]) ; Right
-            (->Wall [0 0]   [400 1] [1 -1]) ; Top
-            (->Wall [0 400] [400 1] [1 -1])]) ; Bottom
+(defn create-walls []
+  [(->Wall [0 0]   [1 400] [-1 1]) ; Left
+   (->Wall [400 0] [1 400] [-1 1]) ; Right
+   (->Wall [0 0]   [400 1] [1 -1]) ; Top
+   (->Wall [0 400] [400 1] [1 -1])]) ; Bottom
 
 (defn move-by-velocity
   [{:keys [pos v] :as obj}]
@@ -55,18 +51,21 @@
       ball' 
       (turn-dir ball obj))))
 
-(defn move-bar [bar e]
-  (letfn [(move- [d] (assoc bar :pos (map + d (:pos bar))))]
-    (condp = e
-      KeyEvent/VK_LEFT (move- [-5 0])
-      KeyEvent/VK_RIGHT (move- [5 0]))))
-      
+(def direction
+  { KeyEvent/VK_LEFT [-1 0]
+    KeyEvent/VK_RIGHT [1 0]})
+
+(defn move-bar [bar dir]
+  (when dir
+    (assoc bar :pos
+           (->> (map #(* 5 %) dir) (map + (:pos bar))))))
+
 (defn draw
   [g {[x y] :pos [w h] :size color :color draw :draw}]
       (.setColor g color)
       (draw g x y w h))
 
-(defn create-panel []
+(defn create-panel [ball bar walls]
   (proxy [JPanel ActionListener KeyListener] []
     (paintComponent [g]
       (proxy-super paintComponent g)
@@ -78,13 +77,16 @@
       (.repaint this))
     ;; KeyListener
     (keyPressed [e]
-       (swap! bar move-bar (.getKeyCode e)))
+       (swap! bar move-bar (get direction (.getKeyCode e))))
     (keyReleased [e])
     (keyTyped [e])))
 
 (defn -main
   [& args]
-  (let [panel (create-panel)]
+  (let [ball (atom (create-ball 100 10))
+        bar (atom (create-bar 200 300))
+        walls (create-walls)
+        panel (create-panel ball bar walls)]
     (doto panel
       (.setFocusable true)
       (.addKeyListener panel))
