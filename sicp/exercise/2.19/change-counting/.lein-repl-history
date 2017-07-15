@@ -1,0 +1,11 @@
+(cc 100 us-coins)
+(cc 100 uk-coins)
+(def us-coins '(1 50 25 10 5))
+(cc 100 us-coins)
+us-coins
+(def us-coins '(1 5 20 25 50))
+us-coins
+(cc 100 us-coins)
+(def us-coins '(1 5 10 25 50))
+(cc 100 us-coins)
+exit
