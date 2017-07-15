@@ -1,0 +1,6 @@
+(sauqre-list [1 2 3 4])
+(square-list [1 2 3 4])
+(square-list' [1 2 3 4])
+(doc revert)
+(doc reverse)
+(square-list-iter [1 2 3 4 5 6])
