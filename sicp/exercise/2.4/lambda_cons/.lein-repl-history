@@ -1,0 +1,6 @@
+(car (cons 1 2))
+(car (mycons 1 2))
+(cdr (mycons 1 2))
+pwd
+ls
+exit
