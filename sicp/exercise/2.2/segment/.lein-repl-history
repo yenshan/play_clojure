@@ -1,0 +1,16 @@
+(make-point 1 2)
+(doc cons)
+(make-point 1 2)
+(def a (make-point 1 2))
+(x-point a)
+(y-point a)
+(def b (make-point 2 3))
+(make-segment a b)
+(def ss (make-segment a b))
+(start-segment ss)
+(end-segment ss)
+(midpoint-segment a b)
+(midpoint-segment ss)
+(-main)
+ls
+exit
