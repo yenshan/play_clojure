@@ -1,0 +1,6 @@
+(def a (mycons 10 11))
+(car a)
+(cdr a)
+(-main)
+q
+exit
