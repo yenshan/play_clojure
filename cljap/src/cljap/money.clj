@@ -1,7 +1,6 @@
 (ns cljap.money
   (:require [clojure.test :refer :all]))
 
-
 (declare validate-same-currency)
 
 (defrecord Currency [divisor sym desc])
@@ -43,3 +42,15 @@
    
 (make-money)
 ; -> #cljap.money.Money{:amount 0, :currency #cljap.money.Currency{:divisor 100, :sym "USD", :desc "US Dollars"}}
+
+(deftest test-money
+  (testing "test =$"
+    (is (=$ (make-money 100) (make-money 100)))
+    (is (not (=$ (make-money 10) (make-money 20))))
+    ;(is (not (=$ (make-money 10) (make-money 10 (:eur currencies)))))
+    )
+  (testing "test +$"
+    (is (= 30 (:amount (+$ (make-money 10) (make-money 20)))))
+    )
+  )
+
