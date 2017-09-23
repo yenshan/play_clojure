@@ -13,9 +13,16 @@
     []
     (map (fn [a b] [a b]) l1 l2)))
 
+(defn combine2
+  ([l1 l2] (combine2 l1 l2 []))
+  ([l1 l2 res]
+   (if (empty? l1)
+     res
+     (recur (rest l1) (rest l2) (concat res (list (first l1) (first l2)))))))
 
 (deftest p2-test
   (testing "combine"
     (is (= ['a 1 'b 2 'c 3] (combine ['a 'b 'c] [1 2 3])))
     (is (= ['a 1 'b 2 'c 3] (interleave ['a 'b 'c] [1 2 3])))
+    (is (= ['a 1 'b 2 'c 3] (combine2 ['a 'b 'c] [1 2 3])))
     ))
