@@ -1,0 +1,4 @@
+(doc identity)
+exit
+(find-doc inter)
+(find-doc "inter")
