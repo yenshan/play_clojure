@@ -28,19 +28,15 @@
             (quot num base)
             (cons (rem num base) res)))))
 
-(defn make-base-number-seq [base start-num]
-  (map #(decimal->n-base-num base %)
-       (iterate inc start-num)))
-
-(defn encode [nums syms]
-  (apply str (map #(nth syms %) nums)))
+(defn encode [num syms]
+  (->>
+    (decimal->n-base-num (count syms) num)
+    (map #(nth syms %))
+    (apply str)))
 
 (defn encode-num-seq
-  "nから始まる数列n, n+1, n+2 の遅延シーケンスを返す。
-  数列は記号列symsの長さをNとしたとき、N進数としてsymsの記号で表される"
   [n syms]
-  (map #(encode % syms)
-       (make-base-number-seq (count syms) n)))
+  (map #(encode % syms) (iterate inc n)))
 
 
 (deftest test-encode-num-seq
@@ -54,6 +50,7 @@
     )
   (testing "test 2"
     (is (= "CAACBBAABBACBAB" (nth (encode-num-seq 0 "ABC") 10000000)))
-  ))
+  )
+)
 
 
