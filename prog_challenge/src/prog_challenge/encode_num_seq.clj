@@ -38,12 +38,6 @@
   [n syms]
   (map #(encode % syms) (iterate inc n)))
 
-(defn encode-num-seq-lazy
-  [n syms]
-  (cons (encode n syms)
-        (lazy-seq (encode-num-seq (inc n) syms))))
-
-(take 5 (encode-num-seq-lazy 0 "ABC"))
 
 (deftest test-encode-num-seq
   (testing "test decimal->n-base-num"
@@ -55,7 +49,8 @@
            (take 10 (encode-num-seq 0 "ABC"))))
     )
   (testing "test 2"
-;    (is (= "CAACBBAABBACBAB" (nth (encode-num-seq 0 "ABC") 10000000)))
+    (is (= "CAACBBAABBACBAB" (nth (encode-num-seq 0 "ABC") 10000000)))
   )
 )
+
 
