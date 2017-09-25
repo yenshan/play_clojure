@@ -72,3 +72,19 @@ exit
 (use 'prog-challenge.encode-num-seq :reload)
 (nth (encode-num-seq 0 "ABC") 10000000)
 (time @(nth (encode-num-seq 0 "ABC") 10000000))
+(defn pos-nums
+([] (pos-num 1)
+([n]
+(cons n (pos-num (inc n)))))
+)
+(use 'prog-challeng.core)
+(use 'prog-challenge.core)
+(posnums)
+(take 5 (posnums))
+(use 'prog-challenge.core :reload)
+(take 5 (posnums))
+(posnums)
+(use 'prog-challenge.encode-num-seq)
+(nth (encode-num-seq-lazy 0 "ABC") 10000000)
+(time (nth (encode-num-seq-lazy 0 "ABC") 10000000))
+exit
