@@ -88,3 +88,7 @@ exit
 (nth (encode-num-seq-lazy 0 "ABC") 10000000)
 (time (nth (encode-num-seq-lazy 0 "ABC") 10000000))
 exit
+(use 'prog-challenge.p3
+)
+(take 100 (prog-challenge.p3
+(take 100 (fib))
