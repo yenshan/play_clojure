@@ -5,7 +5,10 @@
 ;; https://www.codechef.com/problems/LIKECS01
 ;;
 
-(defn find-char [c coll]
+(defn find-char
+  "collの中にcを見つける。見つかればc以降のsub sequenceを返す。
+  見つからない場合はnilを返す。"
+  [c coll]
   (if (empty? coll)
     nil
     (if (= c (first coll))
@@ -13,7 +16,11 @@
       (recur c (rest coll)))))
 
 
-(defn find-subseq [seq1 seq2]
+(defn find-subseq 
+  "seq1 seq2の中で同じsub sequenceがあるかどうかを見つける。
+  返り値はsub sequence。なければ空リストを返す。
+  なお、seq1 seq1は元は同じシーケンスのsub sequceであることを前提にしている。"
+  [seq1 seq2]
   (if (or (empty? seq1) (empty? seq2))
     '() 
     (let [c (first seq1)
@@ -25,14 +32,14 @@
             :else 
               (recur (rest seq1) seq2)))))
 
-(defn has-subseq-eq [string]
+(defn has-subseq-eq? [string]
   (not (empty? (find-subseq string (rest string)))))
 
 (deftest subseq-eq-test
   (testing "test has-subseq-eq"
-    (is (has-subseq-eq "xvenivedivici"))
-    (is (not (has-subseq-eq "likecs")))
-    (is (not (has-subseq-eq "bhuvan")))
-    (is (has-subseq-eq "codechef"))
+    (is (has-subseq-eq? "xvenivedivici"))
+    (is (not (has-subseq-eq? "likecs")))
+    (is (not (has-subseq-eq? "bhuvan")))
+    (is (has-subseq-eq? "codechef"))
     ))
 
