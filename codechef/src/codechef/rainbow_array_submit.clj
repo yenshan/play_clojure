@@ -1,3 +1,4 @@
+#!/usr/bin/env clj
 (require '[clojure.string :as str])
 
 (defn split-by-center
@@ -18,11 +19,14 @@
     (= (first tmp)
        (reverse (second tmp)))))
 
+(defn parse-int [string]
+  (. Integer parseInt string))
+
 (defn string->num-array [string]
-  (map read-string (str/split string #" ")))
+  (map parse-int (str/split string #" ")))
 
 ; your code goes here
-(let [n (read-string (read-line))]
+(let [n (parse-int (read-line))]
   (loop [i 0]
     (when (< i n)
       (let [_ (read-line)

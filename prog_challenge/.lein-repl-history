@@ -92,3 +92,11 @@ exit
 )
 (take 100 (prog-challenge.p3
 (take 100 (fib))
+(mod 7 1000000007)
+(mod 8 1000000007)
+(mod 1 10)
+(mod 2 10)
+(mod 22 10)
+(. Integer parseInteger "123")
+(. Integer parseInt "123")
+exit
