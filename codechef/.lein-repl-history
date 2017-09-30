@@ -1,2 +1,9 @@
 (count [1 2 3])
 (range 1 (count [1 2 3]))
+exit
+(reverse [1 2 3])
+(doc split)
+(doc split-with)
+(loop [x 10] x)
+ls
+exit
