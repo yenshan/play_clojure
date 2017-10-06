@@ -1,4 +1,7 @@
 #!/usr/bin/env clj
+;;
+;; https://www.hackerrank.com/challenges/lambda-march-compute-the-perimeter-of-a-polygon/problem
+;;
 (ns hackerrank.clj.perimeter-polygon
   (:require [clojure.string :as str]))
 
