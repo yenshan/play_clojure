@@ -30,4 +30,4 @@
 (let [nt (Integer/parseInt (read-line))]
   (let [datas (for [i (range nt)]
                 (str->pair (read-line)))]
-    (println (Math/round (perimeter (vec datas))))))
+    (println (perimeter (vec datas)))))
