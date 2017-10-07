@@ -4,12 +4,10 @@
   (concat [1] coll [1]))
 
 (defn next-row [coll]
-  (if (= (count coll) 1)
-    [1 1]
-    (->> coll
-         (partition 2 1)
-         (map (fn [[a b]] (+ a b)))
-         (add-one-both-side))))
+  (->> coll
+       (partition 2 1)
+       (map (fn [[a b]] (+ a b)))
+       (add-one-both-side)))
 
 (defn pascal-triangle
   ([] (pascal-triangle [1]))
