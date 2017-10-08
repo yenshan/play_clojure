@@ -42,7 +42,7 @@
   [w h coll]
     (doseq [iy (range h)
             ix (range w)]
-      (when (zero? ix) (print "\n"))
+      (when (and (> iy 0) (zero? ix)) (print "\n"))
       (if (some #(= % [ix iy]) coll)
         (print \1)
         (print \_))))
@@ -54,3 +54,4 @@
                '())
        (draw-triangle-on-area 63 32)))
 
+(draw-sierpinski-triangle (Integer/parseInt (read-line)))
