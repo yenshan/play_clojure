@@ -1,8 +1,7 @@
-#!/usr/bin/env clj
-
-(ns hackerrank.clj.area-polygon
-  (:require [clojure.string :as str]))
-
+;;
+;;https://www.hackerrank.com/challenges/lambda-march-compute-the-area-of-a-polygon/problem
+;;
+(ns hackerrank.clj.area-polygon)
 
 (defn sum-products
   ([f coll] (sum-products f (conj coll (first coll)) 0))

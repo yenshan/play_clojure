@@ -1,3 +1,6 @@
+;;
+;;https://www.hackerrank.com/challenges/string-o-permute/problem
+;;
 (ns hackerrank.clj.string-o-permute)
 
 (doseq [n (range (Integer/parseInt (read-line)))]

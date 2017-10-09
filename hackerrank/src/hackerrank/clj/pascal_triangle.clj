@@ -1,3 +1,6 @@
+;;
+;;https://www.hackerrank.com/challenges/pascals-triangle/problem
+;;
 (ns hackerrank.clj.pascal-triangle)
 
 (defn add-one-both-side [coll]

@@ -1,3 +1,6 @@
+;;
+;; https://www.hackerrank.com/challenges/functions-and-fractals-sierpinski-triangles/problem
+;;
 (ns hackerrank.clj.sierpinski-triangle)
 
 (defn next-row [coll]

@@ -1,3 +1,6 @@
+;;
+;;https://www.hackerrank.com/challenges/string-mingling/problem
+;;
 (ns hackerrank.clj.string-mingling)
 
 (defn merge-string
