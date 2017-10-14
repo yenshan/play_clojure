@@ -1,3 +1,6 @@
+;;
+;; https://www.hackerrank.com/challenges/prefix-compression/problem
+;;
 (ns hackerrank.clj.prefix-compression)
 
 (defn get-prefix 

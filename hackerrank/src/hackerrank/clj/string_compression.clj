@@ -1,3 +1,6 @@
+;;
+;; https://www.hackerrank.com/challenges/string-compression/problem
+;; 
 (ns hackerrank.clj.string-compression)
 
 

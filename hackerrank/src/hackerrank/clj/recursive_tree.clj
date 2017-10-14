@@ -1,3 +1,6 @@
+;;
+;; https://www.hackerrank.com/challenges/fractal-trees/problem
+;;
 (ns hackerrank.clj.recursive-tree)
 
 (defn make-branch
