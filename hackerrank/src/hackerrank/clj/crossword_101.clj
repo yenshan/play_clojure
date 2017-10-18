@@ -8,19 +8,6 @@
   {:x (first coll)
    :y (second coll)})
 
-(defn sequential-of-pos?
-  "座標の列collの各要素posが1ずつ増加しているかチェックする。
-  pos .. :x or :y"
-  [pos coll]
-  (letfn [(iter [coll pre]
-            (if (empty? coll)
-              true
-              (let [e (first coll)]
-                (if (= (inc (pos pre)) (pos e))
-                  (recur (rest coll) e)
-                  false))))]
-    (iter (rest coll) (first coll))))
-
 (defn axis-complement [a]
   (condp = a
     :x :y
