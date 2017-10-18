@@ -1,3 +1,6 @@
+;;
+;; https://www.hackerrank.com/challenges/crosswords-101/problem
+;;
 (ns hackerrank.clj.crossword-101
   (:require [clojure.string :as s]))
 
