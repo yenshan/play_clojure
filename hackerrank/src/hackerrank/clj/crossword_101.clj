@@ -24,6 +24,30 @@
     :y :x
     :else a))
 
+(defn split-not-sequential
+  ([axis coll] (split-not-sequential axis coll []))
+  ([axis coll res]
+   (if (< (count coll) 2)
+     (concat res coll)
+     (let [a (first coll)
+           b (second coll)]
+     (if (= (inc (axis a)) (axis b))
+       (recur axis 
+              (rest coll) 
+              (conj res a))
+       (list (conj res a) (rest coll)))))))
+
+(defn split-loop
+  ([axis coll] (split-loop axis coll []))
+  ([axis coll ret]
+   (let [res (split-not-sequential axis coll)]
+     (if (= coll res)
+       (conj ret res)
+       (recur axis
+              (second res)
+              (conj ret (first res)))))))
+
+
 (defn find-coordinate-along-axis
   "与えられた軸axisに添うシーケンシャルな座標の列を抽出する。
   axis .. :x or :y
@@ -33,8 +57,9 @@
     (->> (for [e coll]
            (filter #(= (oaxis e) (oaxis %)) coll))
          set
-         (filter #(not= 1 (count %)))
-         (filter #(sequential-of-pos? axis %)))))
+         (map #(split-loop axis %))
+         (apply concat)
+         (filter #(not= 1 (count %))))))
 
 (defn get-empty-pos 
   [y coll]
@@ -49,6 +74,8 @@
 
 
 (defn all-patterns-fill-boxes
+  "すべてのboxesにすべての文字列を入れたすべてのパターンを返す。
+  文字列の長さとboxesの長さが合っているかどうかは無視している。"
   ([strs boxes] (all-patterns-fill-boxes strs boxes []))
   ([strs boxes res]
    (if (empty? strs)
@@ -69,7 +96,9 @@
     (filter #(not (has-some-wrong-len? %)) (all-patterns-fill-boxes strs boxes))))
 
 
-(defn make-pos-word-seq [strs boxes]
+(defn make-pos-word-seq
+  "空きboxの座標に文字列を入れた結果のシーケンスを返す"
+  [strs boxes]
   (for [ptn (patterns-of-put-str-in-box strs boxes)]
     (for [word ptn]
       (map (fn [c b]
@@ -77,7 +106,8 @@
            (first word) (:dat (second word))))))
 
 (defn filter-crossword
-  "クロスワードになっていないものを排除する"
+  "クロスワードになっていないものを排除する
+  （同じ座標のboxに違う文字が入っているパターンを排除する）"
   [coll]
   (reduce (fn [res d]
             (if (= res nil)
@@ -112,10 +142,8 @@
        (apply concat (for [i (range lines)]
                        (get-empty-pos i (read-line))))))
 
-;(def test-boxes (list {:dat 'A :len 6} {:dat 'B :len 5} {:dat 'C :len 7} {:dat 'D :len 6})) 
-;(def test-strs ["LONDON" "DELHI" "ICELAND" "ANKARA"])
-
-(def boxes (get-empty-boxes (read-lines->all-empty-positions 10)))
+(def all-empty-pos (read-lines->all-empty-positions 10))
+(def boxes (get-empty-boxes all-empty-pos))
 (def strs (s/split (read-line) #";"))
 
 (doseq [ptn (make-pos-word-seq strs boxes)]
