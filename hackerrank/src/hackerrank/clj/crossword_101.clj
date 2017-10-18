@@ -1,5 +1,5 @@
-(ns hackerrank.clj.crossword-101)
-
+(ns hackerrank.clj.crossword-101
+  (:require [clojure.string :as s]))
 
 (defn vec->map [coll]
   {:x (first coll)
@@ -48,9 +48,6 @@
                        (find-coordinate-along-axis a dat)))))
 
 
-(def test-boxes (list {:dat 'A :len 6} {:dat 'B :len 5} {:dat 'C :len 7} {:dat 'D :len 6})) 
-(def test-strs ["LONDON" "DELHI" "ICELAND" "ANKARA"])
-
 (defn all-patterns-fill-boxes
   ([strs boxes] (all-patterns-fill-boxes strs boxes []))
   ([strs boxes res]
@@ -72,17 +69,57 @@
     (filter #(not (has-some-wrong-len? %)) (all-patterns-fill-boxes strs boxes))))
 
 
+(defn make-pos-word-seq [strs boxes]
+  (for [ptn (patterns-of-put-str-in-box strs boxes)]
+    (for [word ptn]
+      (map (fn [c b]
+             (assoc b :char c))
+           (first word) (:dat (second word))))))
+
+(defn filter-crossword
+  "クロスワードになっていないものを排除する"
+  [coll]
+  (reduce (fn [res d]
+            (if (= res nil)
+              nil
+              (let [k [(:x d) (:y d)]
+                    c (get res k)]
+                (if (and c (not= c (:char d)))
+                  nil
+                  (assoc res k (:char d))))))
+          {}
+          coll))
+
+(defn print-result [coll]
+  (when coll
+    (doseq [y (range 10)
+            x (range 10)]
+      (do 
+        (when (and (> y 0) (zero? x))
+          (print "\n"))
+        (let [d (get coll [x y])]
+          (if d
+            (print d)
+            (print "+")))))))
+
+;; -----------------------
+;; read datas
+;; -----------------------
+
 (defn read-lines->all-empty-positions
   [lines]
   (map vec->map
        (apply concat (for [i (range lines)]
                        (get-empty-pos i (read-line))))))
 
-;;---
-;;---
-(def boxes (get-empty-boxes (read-line->all-empty-positions 10)))
+;(def test-boxes (list {:dat 'A :len 6} {:dat 'B :len 5} {:dat 'C :len 7} {:dat 'D :len 6})) 
+;(def test-strs ["LONDON" "DELHI" "ICELAND" "ANKARA"])
 
-(doseq [i (patterns-of-put-str-in-box test-strs boxes)]
-  (println i))
+(def boxes (get-empty-boxes (read-lines->all-empty-positions 10)))
+(def strs (s/split (read-line) #";"))
+
+(doseq [ptn (make-pos-word-seq strs boxes)]
+  (print-result 
+    (filter-crossword (apply concat ptn))))
 
 
