@@ -100,13 +100,12 @@
   (when coll
     (doseq [y (range 10)
             x (range 10)]
-      (do 
-        (when (and (> y 0) (zero? x))
-          (print "\n"))
-        (let [d (get coll [x y])]
-          (if d
-            (print d)
-            (print "+")))))))
+      (when (and (> y 0) (zero? x))
+        (print "\n"))
+      (let [d (get coll [x y])]
+        (if d
+          (print d)
+          (print "+"))))))
 
 (defn get-empty-pos 
   [y coll]
