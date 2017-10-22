@@ -1,30 +1,27 @@
 (ns hackerrank.clj.filter-elements
   (:require [clojure.string :as s]))
 
+(defn count-number-in-seq [coll]
+  "generate map of {number [index count]} from coll which is sequence of numbers."
+   (reduce (fn [m d]
+            (let [k (first d)
+                  pre-d (get m k)
+                  new-d (if pre-d
+                          (update pre-d 1 inc)
+                          [(second d) 1])]
+              (assoc m k new-d)))
+          {}
+          coll))
 
-(defn pick-up-dat [dat coll]
-  (letfn [(iter [coll cnt res2]
-            (if (empty? coll)
-              (list [dat cnt] res2)
-              (if (= dat (first coll))
-                (recur (rest coll)
-                       (inc cnt)
-                       res2)
-                (recur (rest coll)
-                       cnt
-                       (conj res2 (first coll))))))]
-    (iter coll 0 [])))
-
-(defn filter-elements [n coll]
-  (letfn [(iter [coll res]
-            (let [[[dat cnt] remain] (pick-up-dat (first coll) coll)]
-              (if (zero? cnt)
-                res
-                (recur remain 
-                       (if (>= cnt n)
-                         (conj res dat)
-                         res)))))]
-    (iter coll [])))
+(defn filter-elements
+  [n coll]
+  (->> (map (fn [a b] [a b]) coll (range (count coll)))
+       count-number-in-seq
+       seq
+       (filter (fn [[_ [_ cnt]]] (>= cnt n)))
+       (sort-by (fn [[_ [no _]]] no)) 
+       (map (fn [[a _]] a))
+       ))
 
 (defn string->num-vec [string]
   (->> (s/split string #" ")
@@ -33,8 +30,12 @@
 (defn print-seq [coll]
   (if (empty? coll)
     (print "-1")
-    (doseq [e coll]
-      (print e "")))
+    (doall
+      (loop [c coll]
+        (print (first c))
+        (when (next c)
+          (print " ")
+          (recur (rest c))))))
   (print "\n"))
 
 (def T (Integer/parseInt (read-line)))
