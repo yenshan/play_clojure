@@ -1,4 +1,4 @@
-(ns hackerrank.clj.super-queen-on-chessboard
+(ns hackerrank.clj.super-queen-on-chessboard2
   (:require [clojure.test :refer :all]))
 
 (def empty-board '())
@@ -29,6 +29,13 @@
 (defn adjoin-position [row col coll]
   (cons [col row] coll))
 
+;;
+;; this solutoin takes 20 seconds when N = 14
+;;
+
+;;
+;; SCIP's 8 queens solution
+;;
 (defn queens [board-size]
   (letfn [(queen-cols [k]
             (if (zero? k)
