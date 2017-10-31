@@ -5,9 +5,8 @@
   (:require [clojure.test :refer :all]))
 
 ;;
-;; this solution takes 8.7 seconds when N = 14
+;; this solution takes under 7 seconds when N = 14
 ;;
-
 (defn index [^long x ^long y ^long k]
   (+ x (* y k)))
 
@@ -24,8 +23,8 @@
                                               [(- x i) y] 
                                               [(- x i) (- y i)]
                                               [(- x i) (+ y i)])))))]
-    (fn [[^long x1 ^long y1] [^long x2 ^long y2]]
-      (contains? ng-positions (index (- x2 x1) (- y2 y1) k)))))
+    (fn [p1 p2]
+      (contains? ng-positions (- p2 p1)))))
 
 (defn queens-patterns [N]
   (let [conflict? (make-conflict-function [0 0] N)]
@@ -34,9 +33,10 @@
                 1
                 (apply +
                         (for [iy (range 1 (inc N))
-                              :when (not-any? #(conflict? [ix iy] %) res)]
+                              :let [p (index ix iy N)]
+                              :when (not-any? #(conflict? p %) res)]
                           (iter (inc ix)
-                                (cons [ix iy] res))))))]
+                                (cons p res))))))]
       (iter 1 '()))))
 
 (->> (read-line)
