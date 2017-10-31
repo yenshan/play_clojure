@@ -5,13 +5,13 @@
   (= (second pos1) (second pos2)))
 
 (defn conflict-diagonally? 
-  [[x1 y1] [x2 y2]]
+  [[^long x1 ^long y1] [^long x2 ^long y2]]
   (if (> y1 y2)
     (= (- y1 y2) (- x1 x2))
     (= (- y2 y1) (- x1 x2))))
 
 (defn conflict-in-box?
-  [[x1 y1] [x2 y2]]
+  [[^long x1 ^long y1] [^long x2 ^long y2]]
     (and (>= x2 (- x1 2)) 
          (>= y2 (- y1 2)) 
          (<= y2 (+ y1 2))))
@@ -26,7 +26,7 @@
 ;; this solutoin takes 18 seconds when N = 14
 ;;
 (defn queens [N]
-  (letfn [(iter [ix res]
+  (letfn [(iter [^long ix res]
             (if (> ix N)
               1
               (apply +
