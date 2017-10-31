@@ -8,22 +8,24 @@
 ;; this solution takes 8.7 seconds when N = 14
 ;;
 
-(defn seqp [^long x ^long y ^long k]
+(defn index [^long x ^long y ^long k]
   (+ x (* y k)))
 
 (defn make-conflict-function
   [[^long x ^long y] ^long k]
-  (let [ng-positions (reduce #(assoc %1 %2 1)
-                             { (seqp -1 -2 k) 1, (seqp -2 -1 k) 1,
-                              (seqp -1 2 k) 1, (seqp -2 1 k) 1}
-                             (apply concat 
-                                    (for [i (range 1 k)]
-                                      (list (seqp (- x i) y k)
-                                            (seqp (- x i) (- y i) k)
-                                            (seqp (- x i) (+ y i) k)
-                                            ))))]
+  (let [ng-positions (reduce (fn [res [x y]] (assoc res (index x y k) 1))
+                             { (index -1 -2 k) 1, (index -2 -1 k) 1,
+                              (index -1 2 k) 1, (index -2 1 k) 1}
+                             (loop [i 1, res []]
+                               (if (> i k)
+                                 res
+                                 (recur (inc i)
+                                        (conj res 
+                                              [(- x i) y] 
+                                              [(- x i) (- y i)]
+                                              [(- x i) (+ y i)])))))]
     (fn [[^long x1 ^long y1] [^long x2 ^long y2]]
-      (contains? ng-positions (seqp (- x2 x1) (- y2 y1) k)))))
+      (contains? ng-positions (index (- x2 x1) (- y2 y1) k)))))
 
 (defn queens-patterns [N]
   (let [conflict? (make-conflict-function [0 0] N)]
