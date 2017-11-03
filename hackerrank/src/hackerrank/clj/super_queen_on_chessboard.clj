@@ -13,9 +13,8 @@
 (defn make-conflict-function
   [[^long x ^long y] ^long k]
   (let [ng-positions (reduce (fn [res [x y]] (assoc res (index x y k) 1))
-                             { (index -1 -2 k) 1, (index -2 -1 k) 1,
-                              (index -1 2 k) 1, (index -2 1 k) 1}
-                             (loop [i 1, res []]
+                             {}
+                             (loop [i 1, res [[-1 -2] [-2 -1] [-1 2] [-2 1]]]
                                (if (> i k)
                                  res
                                  (recur (inc i)
