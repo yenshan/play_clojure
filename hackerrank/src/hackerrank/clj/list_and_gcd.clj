@@ -28,11 +28,11 @@
        (partition 2 2)))
 
 (defn print-seq [coll]
-  (doall (loop [c coll]
-           (print (first c))
-           (when (next c)
+  (doall (loop [[fc & rst]  coll]
+           (print fc)
+           (when (not-empty rst)
              (print " ")
-             (recur (rest c)))))
+             (recur rst))))
   (print "\n"))
 
 (def q (Integer/parseInt (read-line)))
