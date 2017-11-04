@@ -19,11 +19,21 @@
       (double (/ dy 0.00001))
       (double (/ dy dx)))))
 
+(defn perimeter
+  [[x1 y1] [x2 y2]]
+  (Math/sqrt (+ (Math/pow (- x2 x1) 2)
+                (Math/pow (- y2 y1) 2))))
+
 (defn find-convex-pos [pos1 pos2 coll]
   (let [rest-coll (remove #(or (= % pos1) (= % pos2)) coll)]
     (->> (for [e rest-coll]
                  {:pos e :slope (slope pos2 e)})
-         (sort #(compare (:slope %2) (:slope %1)))
+         ;(sort (fn [p1 p2] (compare (:slope p2) (:slope p1))))
+         (sort (fn [p1 p2] 
+                 (if (= (:slope p2) (:slope p1))
+                   (compare (perimeter pos2 (:pos p2))
+                            (perimeter pos2 (:pos p1)))
+                   (compare (:slope p2) (:slope p1)))))
          first
          :pos
          )))
@@ -39,11 +49,6 @@
           (recur p2
                  next-p
                  (conj res next-p)))))))
-
-(defn perimeter
-  [[x1 y1] [x2 y2]]
-  (Math/sqrt (+ (Math/pow (- x2 x1) 2)
-                (Math/pow (- y2 y1) 2))))
 
 (defn perimeter-around 
   "coll should be vector"
