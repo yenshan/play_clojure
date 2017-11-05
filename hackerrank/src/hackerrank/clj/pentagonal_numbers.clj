@@ -1,18 +1,14 @@
 (ns hackerrank.clj.pentagonal-numbers)
 
-(defn two-side-points [^long n]
-  (if (= n 1)
-    1
-    (+ 1 (* 2 (dec n)))))
+(defn sum-inc-to-n [n]
+  (/ (* n (+ n 1)) 2))
 
-(defn P [^long N]
-  (loop [n N, res 0]
-    (if (= n 1)
-      (inc res)
-      (recur (dec n)
-             (-> res
-                 (+ (* 5 (dec n)))
-                 (- (two-side-points (dec n))))))))
+(defn P [N]
+  (if (= N 1)
+    1
+    (- (* 5 (sum-inc-to-n (dec N)))
+       (* 2 (sum-inc-to-n (- N 2)))
+       (- N 2))))
 
 (doseq [_ (range (Integer/parseInt (read-line)))]
   (println (P (Integer/parseInt (read-line)))))
