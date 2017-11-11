@@ -1,3 +1,6 @@
+;;
+;; https://www.hackerrank.com/challenges/birthday-cake-candles/problem
+;;
 (ns hackerrank.algorithms.warmup.birthday-cake-candles
   (:require [clojure.string :as s]))
 
