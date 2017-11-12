@@ -1,4 +1,5 @@
-(ns hackerrank.algorithms.implementation.between-two-sets)
+(ns hackerrank.algorithms.implementation.between-two-sets
+  (:require [clojure.string :as s]))
 
 (defn gcd [a b]
   (let [r (mod a b)]
@@ -16,8 +17,6 @@
             (> nbg nsm) (recur tb ib ts (inc is))
             :else (recur ts is tb (inc ib))
             ))))
-
-(def dat [16 32 96])
 
 (defn do-ff [f coll]
   (->> (for [a coll, b coll] [a b])
@@ -41,12 +40,25 @@
        first))
 
 
+(def dat [16 32 96])
 (def dat1 [2 4])
 
-(scm-coll [2 4 8])
-(gcd-coll [16 32 96])
+(defn integers-between [A B]
+  (let [n-scm (scm-coll A)
+        n-gcd (gcd-coll B)]
+    (->> (iterate #(* % 2) n-scm)
+         (take-while #(<= % n-gcd))
+         (filter #(= 0 (mod n-gcd %))))))
 
-(let [num-gcd (gcd-coll dat)]
-  (map #(/ num-gcd %) dat1))
-  
-        
+(defn str->nums [str]
+  (->> (s/split str #" ")
+       (map #(Integer/parseInt %))))
+
+(def _ (read-line))
+
+(def A (str->nums (read-line)))
+(def B (str->nums (read-line)))
+
+(->> (integers-between A B)
+     count
+     println)
