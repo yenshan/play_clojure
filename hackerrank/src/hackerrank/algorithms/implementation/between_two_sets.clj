@@ -1,3 +1,6 @@
+;;
+;; https://www.hackerrank.com/challenges/between-two-sets/problem
+;;
 (ns hackerrank.algorithms.implementation.between-two-sets
   (:require [clojure.string :as s]))
 
@@ -5,12 +8,11 @@
   (let [r (mod a b)]
     (if (zero? r)
       b
-      (gcd b r))))
+      (recur b r))))
 
 (defn scm [big small]
   (loop [tb big, ib 1, 
          ts small, is 2]
-    ;(println tb ib ts is)
     (let [nbg (* tb ib)
           nsm (* ts is)]
       (cond (= nbg nsm) nbg
@@ -19,36 +21,43 @@
             ))))
 
 (defn do-ff [f coll]
-  (->> (for [a coll, b coll] [a b])
-       (filter (fn [[a b]] (not= a b)))
-       (reduce (fn [res [a b :as d]]
-                 (conj res (sort #(compare %2 %1) d)))
-               #{})
-       (reduce (fn [res [a b]]
-                 (conj res (f a b)))
-               #{})
-       ))
+  (if (= 1 (count coll))
+    coll
+    (->> (for [a coll, b coll] [a b])
+         (filter (fn [[a b]] (not= a b)))
+         (reduce (fn [res d]
+                   (conj res (sort #(compare %2 %1) d)))
+                 #{})
+         (reduce (fn [res [a b]]
+                   (conj res (f a b)))
+                 #{})
+         )))
 
 (defn gcd-coll [coll]
-  (->> (do-ff gcd coll)
-       sort
-       first))
+  (let [res (->> (do-ff gcd coll)
+                 sort
+                 first)]
+    (if (some #(not= 0 (mod % res)) coll)
+      (recur (conj coll res))
+      res)))
 
 (defn scm-coll [coll]
-  (->> (do-ff scm coll)
-       (sort #(compare %2 %1))
-       first))
-
-
-(def dat [16 32 96])
-(def dat1 [2 4])
+  (let [res (->> (do-ff scm coll)
+                 (sort #(compare %2 %1))
+                 first)]
+    (if (some #(not= 0 (mod res %)) coll)
+      (recur (conj coll res))
+      res)))
 
 (defn integers-between [A B]
-  (let [n-scm (scm-coll A)
-        n-gcd (gcd-coll B)]
-    (->> (iterate #(* % 2) n-scm)
-         (take-while #(<= % n-gcd))
-         (filter #(= 0 (mod n-gcd %))))))
+  (if (> (last A) (first B))
+    '()
+    (let [n-scm (scm-coll A)
+          n-gcd (gcd-coll B)]
+      (->> (map #(* % n-scm) (iterate inc 1))
+           (take-while #(<= % n-gcd))
+           (filter #(= 0 (mod n-gcd %)))
+           ))))
 
 (defn str->nums [str]
   (->> (s/split str #" ")
@@ -56,8 +65,8 @@
 
 (def _ (read-line))
 
-(def A (str->nums (read-line)))
-(def B (str->nums (read-line)))
+(def A (sort (str->nums (read-line))))
+(def B (sort (str->nums (read-line))))
 
 (->> (integers-between A B)
      count
