@@ -8,20 +8,14 @@
   (->> (s/split str #" ")
        (map #(Integer/parseInt %))))
 
-(defn count-if [f coll]
-  (reduce (fn [res x] (if (f x) (inc res) res))
-          0
-          coll))
-
 (defn count-divisible-sum-pair [k dat]
-  (loop [a (first dat)
-         col (rest dat)
-         ret 0]
-    (if (empty? col)
+  (loop [[a & rst] dat, ret 0]
+    (if (empty? rst)
       ret
-      (recur (first col)
-             (rest col)
-             (+ ret (count-if #(zero? (mod (+ % a) k)) col))))))
+      (recur rst (->> rst
+                      (filter #(zero? (mod (+ % a) k))) 
+                      count
+                      (+ ret))))))
 
 (let [[_ k] (str->nums (read-line))
       dat (str->nums (read-line))]
