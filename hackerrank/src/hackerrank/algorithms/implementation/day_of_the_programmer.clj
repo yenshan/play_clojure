@@ -6,8 +6,6 @@
 
 (def days [31 28 31 30 31 30 31 31 30 31 30 31])
 
-(def days-1918 [31 15 31 30 31 30 31 31 30 31 30 31])
-
 (defn is-leap-year? [y]
   (if (<= y 1918)
     (zero? (mod y 4))
@@ -17,9 +15,9 @@
 
 (def year (Integer/parseInt (read-line)))
 
-(let [days-coll (if (= year 1918)
-                  days-1918
-                  (if (is-leap-year? year) (update days 1 inc) days))
+(let [days-coll (cond (= year 1918) (update days 1 #(- % 13))
+                      (is-leap-year? year) (update days 1 inc)
+                      :else days)
       m-coll (loop [[d & rst] days-coll, sum 0, res []]
                (if (>= sum 256)
                  res
