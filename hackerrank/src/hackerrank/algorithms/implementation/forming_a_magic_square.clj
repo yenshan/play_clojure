@@ -68,9 +68,22 @@
       {:sum sum :writable wtbl :dat dat}
       nil)))
 
-(->> (check-not-writable-pos dat)
-     (not-sum-15? (row-is? 1)))
 
+(defn get-modify-target [coll]
+  (let [dat1 (check-not-writable-pos coll)
+        modify-target (->> (for [i directions]
+                             (not-sum-15? i dat1))
+                           (filter (fn [d] (= 1 (:writable d)))))
+        ]
+    (for [{sum :sum dat :dat}  modify-target]
+      (let [mt (some (fn [d] (if (:flag d) d)) dat)]
+        {:sum sum :pos (:pos mt) :num (:num mt) }))))
+
+(get-modify-target dat)
+
+;  (for [{sum :sum dat :dat}  modify-target]
+;    (let [mt (filter #(:flag %) dat)]
+;      {:sum sum :dat 
 
 
 (defn sum-when [f coll]
