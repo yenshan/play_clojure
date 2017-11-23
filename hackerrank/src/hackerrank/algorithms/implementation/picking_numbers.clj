@@ -9,12 +9,6 @@
         ]
     [a b]))
 
-(defn subset [coll]
-  (let [dat (map-indexed vector coll)]
-    (for [i (range (count dat))]
-      (map second
-           (remove (fn [[idx _]] (= idx i)) dat)))))
-
 (defn contains-ok-coll? [coll]
   (loop [[d & rst] coll]
     (if (< (count d) 2)
@@ -23,9 +17,25 @@
         d
         (recur rst)))))
 
+
+(defn subset [coll]
+  (let [dat (map-indexed vector coll)]
+    (->> (range (count dat))
+         (reduce (fn [res i]
+                   (conj res
+                         (->> dat
+                              (remove (fn [[idx _]] (= idx i)))
+                              (map second)
+                              sort)))
+                 #{})
+         vec)))
+
 (defn map-subset [coll]
-  (apply concat (for [e coll]
-                  (subset e))))
+  (->> coll
+       (reduce (fn [res e]
+                 (apply conj res (subset e)))
+               #{})
+       vec))
 
 (defn num-of-chosen-integer [coll]
   (loop [[e & rst :as sset] [coll]]
