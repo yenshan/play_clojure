@@ -23,21 +23,17 @@
         d
         (recur rst)))))
 
+(defn map-subset [coll]
+  (apply concat (for [e coll]
+                  (subset e))))
+
 (defn num-of-chosen-integer [coll]
-  (if (< (count coll) 2)
-    nil
-    (let [sset (subset coll)
-          res (contains-ok-coll? sset)]
-      (if res
-        (count res)
-        (let [rt (for [e sset
-                       :let [r (num-of-chosen-integer e)]
-                       :when r
-                       ]
-                   r)]
-          (if (empty? rt)
-            nil
-            (first (sort #(compare %2 %1) rt))))))))
+  (loop [[e & rst :as sset] [coll]]
+    (if (< (count e) 2)
+      0
+      (if (contains-ok-coll? sset)
+        (count e)
+        (recur (map-subset sset))))))
 
 (defn str->nums [str]
   (->> (s/split str #" ")
@@ -45,6 +41,7 @@
 
 (def _ (read-line))
 
-(->> (str->nums (read-line))
-     (num-of-chosen-integer)
+(->> (read-line)
+     str->nums
+     num-of-chosen-integer
      println)
