@@ -7,7 +7,7 @@
 ;;
 ;; Solved!! 
 ;; This is GOOD problem!
-;; I took a lot of thiking time to solve this problem. 
+;; I spent a lot of thiking time to solve this problem. 
 ;; Ultimately the answer is very simple.
 ;;
 
