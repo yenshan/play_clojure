@@ -11,12 +11,9 @@
                       (sort [a t])))))))
 
 (defn some-ng-pair? [coll]
-  (for [[a b :as d] (uniq-combination coll)
-        :let [dif (Math/abs (- a b))]
-        :when (> dif 1)
-        ]
-    d))
-                            
+  (->> (map (fn [[a b]] (- a b)) (uniq-combination coll))
+       (filter #(or (< % -1) (> % 1)))))
+
 (defn contains-ok-coll? [coll]
   (loop [[d & rst] coll]
     (if (< (count d) 2)
