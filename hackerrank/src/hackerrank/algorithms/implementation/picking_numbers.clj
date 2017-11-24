@@ -1,62 +1,41 @@
-(ns hackerrank.algorithms.implementation.picking-numbers
+;;
+;; https://www.hackerrank.com/challenges/picking-numbers/problem
+;;
+(ns hackerrank.algorithms.implementation.picking-numbers2
   (:require [clojure.string :as s]))
 
-(defn uniq-combination [coll]
-  (loop [[a & rst] coll, res #{}]
-    (if (empty? rst)
-      (vec res)
-      (recur rst 
-             (apply conj res 
-                    (for [t rst]
-                      (sort [a t])))))))
-
-(defn some-ng-pair? [coll]
-  (->> (map (fn [[a b]] (- a b)) (uniq-combination coll))
-       (filter #(or (< % -1) (> % 1)))))
-
-(defn contains-ok-coll? [coll]
-  (loop [[d & rst] coll]
-    (if (< (count d) 2)
-      nil
-      (if (empty? (some-ng-pair? d))
-        d
-        (recur rst)))))
-
-
-(defn subset [coll]
-  (let [dat (map-indexed vector coll)]
-    (->> (range (count dat))
-         (reduce (fn [res i]
-                   (conj res
-                         (->> dat
-                              (remove (fn [[idx _]] (= idx i)))
-                              (map second)
-                              sort)))
-                 #{})
-         vec)))
-
-(defn map-subset [coll]
-  (->> coll
-       (reduce (fn [res e]
-                 (apply conj res (subset e)))
-               #{})
-       vec))
-
-;(def dat [6 5 3 3 1])
-
-;(map-subset (map-subset [dat]))
-
-(defn num-of-chosen-integer [coll]
-  (loop [[e & rst :as sset] [coll]]
-    (if (< (count e) 2)
-      0
-      (if (contains-ok-coll? sset)
-        (count e)
-        (recur (map-subset sset))))))
+;;
+;; Solved!! 
+;; This is GOOD problem!
+;; I took a lot of thiking time to solve this problem. 
+;; Ultimately the answer is very simple.
+;;
 
 (defn str->nums [str]
   (->> (s/split str #" ")
        (map #(Integer/parseInt %))))
+
+(defn count-chosen-integer [n coll]
+  (count (filter (fn [d]
+                   (>= 1 (Math/abs (- d n))))
+                 coll)))
+
+(defn num-of-chosen-integer [coll]
+  (loop [dat (sort coll)]
+    (if (< (count dat) 2)
+      (count dat)
+      (let [first-d (first dat)
+            last-d (last dat)
+            dlf (Math/abs (- first-d last-d))
+            ]
+        (if (<= dlf 1)
+          (count dat)
+          (let [cnt-first-ci (count-chosen-integer first-d (rest dat))
+                cnt-last-ci (count-chosen-integer last-d (drop-last dat))
+                ]
+            (recur (if (< cnt-first-ci cnt-last-ci) 
+                     (remove #(= % first-d) dat) 
+                     (remove #(= % last-d) dat)))))))))
 
 (def _ (read-line))
 
@@ -64,3 +43,4 @@
      str->nums
      num-of-chosen-integer
      println)
+
