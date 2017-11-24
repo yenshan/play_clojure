@@ -1,14 +1,22 @@
 (ns hackerrank.algorithms.implementation.picking-numbers
   (:require [clojure.string :as s]))
 
+(defn uniq-combination [coll]
+  (loop [[a & rst] coll, res #{}]
+    (if (empty? rst)
+      (vec res)
+      (recur rst 
+             (apply conj res 
+                    (for [t rst]
+                      (sort [a t])))))))
+
 (defn some-ng-pair? [coll]
-  (for [a coll
-        b (rest coll)
+  (for [[a b :as d] (uniq-combination coll)
         :let [dif (Math/abs (- a b))]
         :when (> dif 1)
         ]
-    [a b]))
-
+    d))
+                            
 (defn contains-ok-coll? [coll]
   (loop [[d & rst] coll]
     (if (< (count d) 2)
@@ -36,6 +44,10 @@
                  (apply conj res (subset e)))
                #{})
        vec))
+
+;(def dat [6 5 3 3 1])
+
+;(map-subset (map-subset [dat]))
 
 (defn num-of-chosen-integer [coll]
   (loop [[e & rst :as sset] [coll]]
