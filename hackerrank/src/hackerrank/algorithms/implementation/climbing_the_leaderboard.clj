@@ -7,7 +7,8 @@
 ;;
 ;; GOOD problem: 
 ;; This prolem set time limitation, it let me think efficient algorithm. 
-;; Using map is the most effective solution to pass all test cases in time limitation.
+;; Using map is the most effective solution to pass all test cases in the time limitation.
+;;   -> Instead using map, using Java array can get same effectiveness. ('to-array' function)
 ;;
 
 (defn str->nums [str]
@@ -27,14 +28,11 @@
           :else (inc p))))))
 
 (defn rank-history [your-scores rank-scores]
-  (let [rkmap (->> (vec (set rank-scores))
-                   (sort #(compare %2 %1))
-                   (map-indexed vector)
-                   (reduce (fn [res [i d]]
-                             (assoc res i d))
-                           {}))]
+  (let [rk-array (->> (vec (set rank-scores))
+                      (sort #(compare %2 %1))
+                      to-array)]
     (for [sc your-scores]
-      (check-rank sc rkmap))))
+      (check-rank sc rk-array))))
 
 (let [_ (read-line)
       rank-scores (str->nums (read-line))
