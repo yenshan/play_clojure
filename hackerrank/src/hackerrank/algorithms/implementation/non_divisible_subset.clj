@@ -11,31 +11,33 @@
         (sort [i j]))
       set))
 
-(defn make-subset [coll]
-  (apply concat 
-    (map (fn [dat] 
-           (for [e dat]
-             (remove #(= % e) dat)))
-         coll)))
+(defn is-ok? [k]
+  (fn [[^long i ^long j]]
+    (not= 0 (mod (+ i j) k))))
 
+(defn remove-pair-contain-num [n coll]
+  (remove (fn [[a b]]
+            (or (= a n) (= b n))) coll))
 
 (let [[n k] (str->nums (read-line))
       dat (str->nums (read-line))
-      ng-comb-map (->> (combinations dat) 
-                       (filter (fn [[^long i ^long j]] 
-                                 (zero? (mod (+ i j) k))))
+      all-pairs (combinations dat)
+      ng-pairs (remove (is-ok? k) all-pairs)
+      ng-num-list (->> (apply concat ng-pairs)
                        (reduce (fn [res d]
-                                 (assoc res d 1))
-                               {}))
-      largest-S (loop [subsets [dat], len n]
-                  (let [has-ok-coll? (some (fn [d]
-                                             (not-any? (fn [e] (ng-comb-map e))
-                                                       (combinations d)))
-                                           subsets)]
-                    (if has-ok-coll?
-                      len
-                      (recur (make-subset subsets)
-                             (dec len)))))
+                                 (if (res d)
+                                   (update res d inc)
+                                   (assoc res d 1)))
+                               {})
+                       (sort-by second #(compare %2 %1))
+                       (map first))
+      nr (loop [[nn & rst :as nglst] ng-num-list, ngp ng-pairs, cnt 0]
+           (if (empty? ngp)
+             cnt
+             (let [next-ngp (remove-pair-contain-num nn ngp)]
+               (if (= (count ngp) (count next-ngp))
+                 (recur rst next-ngp cnt)
+                 (recur rst next-ngp (inc cnt))))))
       ]
-  (println largest-S))
-
+  (println (- n nr))
+  )
