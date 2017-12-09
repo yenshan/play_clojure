@@ -1,43 +1,46 @@
+;;
+;; https://www.hackerrank.com/challenges/non-divisible-subset/problem
+;;
 (ns hackerrank.algorithms.implementation.non-divisible-subset
-  (:require [clojure.string :as s]
-            [clojure.set :refer [intersection]]))
+  (:require [clojure.string :as s]))
+ 
+
+;;
+;; GOOD problem.
+;; You need to think different way of idea to solve this problem in computable time.
+;; => see discussion board.
+;;
 
 (defn str->nums [str]
   (->> (s/split str #" ")
        (map #(Integer/parseInt %))))
 
-(defn combinations [coll]
-  (-> (for [i coll, j coll, :when (not= i j)]
-        (sort [i j]))
-      set))
-
-(defn is-ok? [k]
-  (fn [[^long i ^long j]]
-    (not= 0 (mod (+ i j) k))))
-
-(defn remove-pair-contain-num [n coll]
-  (remove (fn [[a b]]
-            (or (= a n) (= b n))) coll))
 
 (let [[n k] (str->nums (read-line))
       dat (str->nums (read-line))
-      all-pairs (combinations dat)
-      ng-pairs (remove (is-ok? k) all-pairs)
-      ng-num-list (->> (apply concat ng-pairs)
-                       (reduce (fn [res d]
-                                 (if (res d)
-                                   (update res d inc)
-                                   (assoc res d 1)))
-                               {})
-                       (sort-by second #(compare %2 %1))
-                       (map first))
-      nr (loop [[nn & rst :as nglst] ng-num-list, ngp ng-pairs, cnt 0]
-           (if (empty? ngp)
-             cnt
-             (let [next-ngp (remove-pair-contain-num nn ngp)]
-               (if (= (count ngp) (count next-ngp))
-                 (recur rst next-ngp cnt)
-                 (recur rst next-ngp (inc cnt))))))
+      rem-lst (map #(mod % k) dat)
+      cnt-rem (sort-by second #(compare %2 %1)
+                       (vec 
+                         (reduce (fn [res d]
+                                   (if (res d)
+                                     (update res d inc)
+                                     (assoc res d 1)))
+                                 {} rem-lst)))
+     rm-cnt (loop [[a & rst :as lst] cnt-rem, res 0]
+              (if (empty? lst)
+                res
+                (let [rn (first a)
+                      cnt (second a)]
+                  (cond (and (zero? rn) (< 1 cnt)) (recur rst (+ res (dec cnt)))
+                        (and (= k (+ rn rn)) (< 1 cnt)) (recur rst (+ res (dec cnt)))
+                        :else (let [b (some (fn [d]
+                                              (when (zero? (mod (+ (first d) (first a))
+                                                                k))
+                                                d))
+                                            rst)]
+                                (if b 
+                                  (recur (remove #(= % b) rst) (+ res (second b)))
+                                  (recur rst res)))))))
       ]
-  (println (- n nr))
+  (println (- n rm-cnt))
   )
