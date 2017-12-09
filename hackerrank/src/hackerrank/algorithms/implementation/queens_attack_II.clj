@@ -8,22 +8,13 @@
   (->> (s/split str #" ")
        (map #(Integer/parseInt %))))
 
-(defn check-queen-way [f pos n objstacle]
-  (loop [[r c :as p] (f pos), res []]
-    (cond (or (< r 1) (> r n)) res
-          (or (< c 1) (> c n)) res
-          (objstacle p) res
-          :else (recur (f p)
-                       (conj res p)))))
-               
-
 (let [[n k] (str->nums (read-line))
       queen-pos (str->nums (read-line))
       objstacles (->> (for [_ (range k)]
-                      (str->nums (read-line)))
-                    (reduce (fn [res d]
-                              (assoc res d 1))
-                            {}))]
+                        (str->nums (read-line)))
+                      (reduce (fn [res d]
+                                (assoc res d 1))
+                              {}))]
   (letfn [(check-queen-way [f]
             (loop [[r c :as p] (f queen-pos), res []]
               (cond (or (< r 1) (> r n)) res
