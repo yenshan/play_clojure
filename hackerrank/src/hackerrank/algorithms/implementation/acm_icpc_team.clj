@@ -4,10 +4,16 @@
 (ns hackerrank.algorithms.implementation.acm-icpc-team
   (:require [clojure.string :as s]))
 
+;;
+;; GOOD problem.
+;; You should use bit operation and manage big number, and this is not so difficult in Clojure.
+;; You can imporove performance 32 times than which does not use bit operation.
+;; (Clojure's long is 32 wide integer)
+;;
+
 (defn str->nums [str]
   (->> (s/split str #" ")
        (map #(Integer/parseInt %))))
-
 (defn subs-32 [string]
   (let [str-len (count string)]
     (loop [i 0, res []]
@@ -20,17 +26,19 @@
                  (conj res (subs string i end))))))))
 
 (defn bit-or-coll [col1 col2]
-  (map #(bit-or %1 %2) col1 col2))
+  (map (fn [^long a ^long b] 
+         (bit-or a b))
+       col1 col2))
 
 (defn count-bits [number]
-  (loop [n number, cnt 0]
+  (loop [^long n number, cnt 0]
     (if (< n 2)
       (+ cnt n)
       (recur (quot n 2)
              (+ cnt (mod n 2))))))
 
 (defn count-bits-coll [coll]
-  (reduce (fn [res d]
+  (reduce (fn [^long res d]
             (+ res (count-bits d)))
           0
           coll))
@@ -50,10 +58,13 @@
                (map #(Integer/parseInt % 2)
                     (subs-32 (read-line))))
       pairs (all-pairs topics)
-      or-pairs (map (fn [[a b]] 
-                     (bit-or-coll a b)) pairs)
-      cnt-pairs (map count-bits-coll or-pairs)
-      max-n (apply max cnt-pairs)
+      [max-n cnt-pairs] (reduce (fn [[maxn col :as d] [a b]] 
+                                  (let [cnt (count-bits-coll (bit-or-coll a b))]
+                                    (if (>= cnt maxn) 
+                                      [cnt (conj col cnt)]
+                                      d)))
+                                [0 []]
+                                pairs)
       cnt-max (count (filter #(= % max-n) cnt-pairs))
       ]
   (println max-n)
