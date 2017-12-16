@@ -1,22 +1,14 @@
 (ns hackerrank.algorithms.implementation.bigger-is-greater)
 
-(defn make-exch-info [a b]
-  {(first b) (second a)
-   (first a) (second b)})
-
 (defn drop-nth [n coll]
   (->> (map-indexed vector coll)
        (remove (fn [[i _]] (= i n )))
        (map second)))
 
 (defn next-bigger-string [string]
-  (let [st-col (map-indexed vector string)
-        st-map (reduce (fn [res [i c]]
-                         (assoc res i c))
-                       {}
-                       st-col)
-        len (count string)
-        pivot (loop [i (- (count string) 2), prev (last string)]
+  (let [st-map (to-array string)
+        len (.length string)
+        pivot (loop [i (- len 2), prev (last string)]
                 (if (< i 0 )
                   nil
                   (let [c (get st-map i)]
@@ -26,24 +18,20 @@
         ]
     (when pivot 
         (let [piv-c (get st-map pivot)
-              td (loop [i (inc pivot), res nil]
-                   (if (= i len)
-                     res
-                     (let [c (get st-map i)]
-                       (if (< (compare piv-c c) 0)
-                         (if (or (nil? res) (< (compare c (second res)))) (recur (inc i) [i c])
-                           (recur (inc i) res))
-                         (recur (inc i) res)))))
-              exc-pair [[pivot piv-c] td]
+              [ti td] (reduce (fn [res i]
+                                (let [c (get st-map i)
+                                      [_ pd] res]
+                                  (if (and (< (compare piv-c c) 0)
+                                           (< (compare c pd) 0))
+                                    [i c]
+                                    res)))
+                              [(inc pivot) (get st-map (inc pivot))]
+                              (range (inc pivot) len))
+              front-coll (concat (take pivot string) (list td))
+              rear-coll (sort (cons piv-c (drop (inc pivot) (drop-nth ti string))))
+              answer (apply str (concat front-coll rear-coll))
               ]
-          (when exc-pair
-            (let [[[si sd] [ti td]] exc-pair
-                  front-coll (concat (take si string) (list td))
-                  rear-coll (sort (cons sd (drop (inc si) (drop-nth ti string))))
-                  answer (apply str (concat front-coll rear-coll))
-                  ]
-              answer
-              ))
+          answer
           ))))
 
 (let [n (Integer/parseInt (read-line))
