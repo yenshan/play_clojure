@@ -16,40 +16,41 @@
                        {}
                        st-col)
         len (count string)
-        exc-pair (loop [i (dec len)]
-                   (if (< i 0)
-                     nil
-                     (let [sd (st-map i)
-                           t (loop [ti (inc i), res nil]
-                               (if (= ti len)
-                                 res
-                                 (let [td (st-map ti)]
-                                   (if (< (compare sd td) 0)
-                                     (cond (nil? res) (recur (inc ti) [ti td])
-                                           (< (compare td (second res)) 0) (recur (inc ti) [ti td])
-                                           :else (recur (inc ti) res))
-                                     (recur (inc ti) res)))))
-                           ]
-                       (if (nil? t)
-                         (recur (dec i))
-                         [[i sd] t]))))
+        pivot (loop [i (- (count string) 2), prev (last string)]
+                (if (< i 0 )
+                  nil
+                  (let [c (get st-map i)]
+                    (if (< (compare c prev) 0)
+                      i
+                      (recur (dec i) c)))))
         ]
-    (when exc-pair
-      (let [[[si sd] [ti td]] exc-pair
-            front-coll (concat (take si string) (list td))
-            rear-coll (sort (cons sd (drop (inc si) (drop-nth ti string))))
-            answer (apply str (concat front-coll rear-coll))
-            ]
-        answer
-      ))
-    ))
+    (when pivot 
+        (let [piv-c (get st-map pivot)
+              td (loop [i (inc pivot), res nil]
+                   (if (= i len)
+                     res
+                     (let [c (get st-map i)]
+                       (if (< (compare piv-c c) 0)
+                         (if (or (nil? res) (< (compare c (second res)))) (recur (inc i) [i c])
+                           (recur (inc i) res))
+                         (recur (inc i) res)))))
+              exc-pair [[pivot piv-c] td]
+              ]
+          (when exc-pair
+            (let [[[si sd] [ti td]] exc-pair
+                  front-coll (concat (take si string) (list td))
+                  rear-coll (sort (cons sd (drop (inc si) (drop-nth ti string))))
+                  answer (apply str (concat front-coll rear-coll))
+                  ]
+              answer
+              ))
+          ))))
 
-(let [n (Integer/parseInt (read-line))]
-  (doseq [_ (range n)]
-    (let [string (read-line)
-          answer (next-bigger-string string)
-          ]
-      (if (nil? answer)
-        (println "no answer")
-        (println answer)))))
+(let [n (Integer/parseInt (read-line))
+      answers (for [_ (range n)] 
+                (next-bigger-string (read-line)))]
+  (doseq [a answers]
+    (if (nil? a)
+      (println "no answer")
+      (println a))))
 
