@@ -5,7 +5,7 @@
        (remove (fn [[i _]] (= i n )))
        (map second)))
 
-(defn next-bigger-string [string]
+(defn next-bigger-string [^String string]
   (let [st-map (to-array string)
         len (.length string)
         pivot (loop [i (- len 2), prev (last string)]
@@ -18,6 +18,7 @@
         ]
     (when pivot 
         (let [piv-c (get st-map pivot)
+              piv-next (inc pivot)
               [ti td] (reduce (fn [res i]
                                 (let [c (get st-map i)
                                       [_ pd] res]
@@ -25,10 +26,12 @@
                                            (< (compare c pd) 0))
                                     [i c]
                                     res)))
-                              [(inc pivot) (get st-map (inc pivot))]
-                              (range (inc pivot) len))
-              front-coll (concat (take pivot string) (list td))
-              rear-coll (sort (cons piv-c (drop (inc pivot) (drop-nth ti string))))
+                              [piv-next (get st-map piv-next)]
+                              (range piv-next len))
+              st-seq (vec string) 
+              front-coll (take pivot st-seq)
+              rear-coll (cons td 
+                              (sort (cons piv-c (drop piv-next (drop-nth ti st-seq)))))
               answer (apply str (concat front-coll rear-coll))
               ]
           answer
