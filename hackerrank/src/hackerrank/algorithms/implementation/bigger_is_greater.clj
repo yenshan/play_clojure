@@ -6,6 +6,8 @@
 ;;
 ;; It was hard to pass all test cases. Performance is the bottleneck.
 ;; I improved performace little by little.
+;; It spended 35 secs at first on my environment.
+;; Yes, it now cost in 4.5 secs. 
 ;;
 
 (defn drop-nth [n coll]
@@ -13,27 +15,26 @@
           (subvec coll (inc n))))
 
 (defn next-bigger-string [^String string]
-  (let [st-map (to-array string)
-        len (.length string)
-        pivot (loop [i (- len 2), prev (last string)]
+  (let [len (.length string)
+        pivot (loop [i (- len 2), prev (.charAt string (dec len))]
                 (if (< i 0 )
                   nil
-                  (let [c (get st-map i)]
+                  (let [c (.charAt string i)]
                     (if (< (compare c prev) 0)
                       i
                       (recur (dec i) c)))))
         ]
     (when pivot 
-        (let [piv-c (get st-map pivot)
+        (let [piv-c (.charAt string pivot)
               piv-next (inc pivot)
               [ti td] (reduce (fn [res i]
-                                (let [c (get st-map i)
+                                (let [c (.charAt string i)
                                       [_ pd] res]
                                   (if (and (< (compare piv-c c) 0)
                                            (< (compare c pd) 0))
                                     [i c]
                                     res)))
-                              [piv-next (get st-map piv-next)]
+                              [piv-next (.charAt string piv-next)]
                               (range piv-next len))
               st-seq (vec string) 
               front-coll (conj (subvec st-seq 0 pivot) td)
