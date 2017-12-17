@@ -1,9 +1,16 @@
+;;
+;; https://www.hackerrank.com/challenges/bigger-is-greater/problem
+;;
 (ns hackerrank.algorithms.implementation.bigger-is-greater)
 
+;;
+;; It was hard to pass all test cases. Performance is the bottleneck.
+;; I improved performace little by little.
+;;
+
 (defn drop-nth [n coll]
-  (->> (map-indexed vector coll)
-       (remove (fn [[i _]] (= i n )))
-       (map second)))
+  (concat (subvec coll 0 n)
+          (subvec coll (inc n))))
 
 (defn next-bigger-string [^String string]
   (let [st-map (to-array string)
@@ -29,17 +36,15 @@
                               [piv-next (get st-map piv-next)]
                               (range piv-next len))
               st-seq (vec string) 
-              front-coll (take pivot st-seq)
-              rear-coll (cons td 
-                              (sort (cons piv-c (drop piv-next (drop-nth ti st-seq)))))
-              answer (apply str (concat front-coll rear-coll))
+              front-coll (conj (subvec st-seq 0 pivot) td)
+              rear-coll (sort (cons piv-c (drop piv-next (drop-nth ti st-seq))))
               ]
-          answer
+              (apply str (concat front-coll rear-coll))
           ))))
 
 (let [n (Integer/parseInt (read-line))
-      answers (for [_ (range n)] 
-                (next-bigger-string (read-line)))]
+      inputs (for [_ (range n)] (read-line))
+      answers (map next-bigger-string inputs)] 
   (doseq [a answers]
     (if (nil? a)
       (println "no answer")
