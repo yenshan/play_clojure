@@ -30,15 +30,18 @@
                        )
           first-c (second (first pattern))
           matrix-len (count matrix)
+          ptn-len (count pattern)
           ptn-is-in (loop [i 0]
                       (if (>= i matrix-len)
                         nil
                         (if (and (= first-c (get matrix i))
-                                 (every? #(and (< (+ i (first %)) matrix-len)
-                                               (= (get matrix (+ i (first %))) (second %)))
+                                 (< (mod i C) (mod (+ i (dec c)) C))
+                                 (< (+ i (dec ptn-len)) matrix-len)
+                                 (every? #(= (get matrix (+ i (first %))) (second %))
                                          pattern))
                           true
                           (recur (inc i)))))
+
           ]
       (if ptn-is-in
         (println "YES")
