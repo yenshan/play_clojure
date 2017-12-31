@@ -17,13 +17,10 @@
     (let [[R C] (str->nums (read-line))
           matrix (->> (read-matrix R)
                       (apply str)
-                      (map-indexed vector)
-                      (reduce (fn [res [i d]]
-                           (assoc res i d))
-                         {})
+                      to-array
                       )
           [r c] (str->nums (read-line))
-          index (fn [^long r ^long c] (+ c (* r C)))
+          index (fn [r c] (+ c (* r C)))
           pattern (->> (read-matrix r)
                        (apply concat)
                        (map-indexed vector)
@@ -32,12 +29,13 @@
                                d]))
                        )
           first-c (second (first pattern))
+          matrix-len (count matrix)
           ptn-is-in (loop [i 0]
-                      (if (> i (count matrix))
+                      (if (>= i matrix-len)
                         nil
                         (if (and (= first-c (get matrix i))
-                                 (every? #(= (get matrix (+ i (first %)))
-                                             (second %))
+                                 (every? #(and (< (+ i (first %)) matrix-len)
+                                               (= (get matrix (+ i (first %))) (second %)))
                                          pattern))
                           true
                           (recur (inc i)))))
