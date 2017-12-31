@@ -19,29 +19,24 @@
                       (apply str)
                       to-array
                       )
+          matrix-len (count matrix)
           [r c] (str->nums (read-line))
           index (fn [r c] (+ c (* r C)))
-          pattern (->> (read-matrix r)
-                       (apply concat)
-                       (map-indexed vector)
-                       (map (fn [[i d]]
-                              [(index (quot i c) (mod i c))
-                               d]))
-                       )
-          first-c (second (first pattern))
-          matrix-len (count matrix)
+          pattern (to-array (apply concat (read-matrix r)))
           ptn-len (count pattern)
+          ptn-idx (to-array (for [ir (range r) ic (range c)] (index ir ic)))
+          first-c (get pattern 0)
           ptn-is-in (loop [i 0]
-                      (if (>= i matrix-len)
+                      (if (<= matrix-len (+ i ptn-len))
                         nil
-                        (if (and (= first-c (get matrix i))
-                                 (< (mod i C) (mod (+ i (dec c)) C))
-                                 (< (+ i (dec ptn-len)) matrix-len)
-                                 (every? #(= (get matrix (+ i (first %))) (second %))
-                                         pattern))
-                          true
-                          (recur (inc i)))))
-
+                        (if (or (< C (+ (mod i C) c))
+                                (not= first-c (get matrix i)))
+                          (recur (inc i))
+                          (if (every? #(= (get matrix (+ i (get ptn-idx %)))
+                                          (get pattern %))
+                                      (range ptn-len))
+                              true
+                              (recur (inc i))))))
           ]
       (if ptn-is-in
         (println "YES")
