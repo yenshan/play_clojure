@@ -7,7 +7,6 @@
 
 (defn number-at [n]
   (loop [i 0, sum 0N]
-    (println i sum)
     (let [len (* 3 (Math/pow 2 i))
           next-sum (+ sum len)]
       (if (<= n next-sum)
