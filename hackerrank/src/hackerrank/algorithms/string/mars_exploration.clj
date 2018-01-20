@@ -7,8 +7,7 @@
   (->> (repeat "SOS")
        (take (/ (count string) 3))
        (apply str)
-       (map #(not= %1 %2) string)
-       (filter true?)
+       (filter #(not= %1 %2) string)
        count
        println))
 
