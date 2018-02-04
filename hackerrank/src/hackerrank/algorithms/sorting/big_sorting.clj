@@ -4,15 +4,13 @@
 (ns hackerrank.algorithms.sorting.big-sorting)
 
 (let [n (Integer/parseInt (read-line))
-      nums (for [_ (range n)]
-             (read-line))
-      sort-result (sort (fn [a b]
+      result (->> (for [_ (range n)]
+                    (read-line))
+                  (sort (fn [a b]
                           (if (= (count a) (count b))
                             (compare a b)
-                            (compare (count a) (count b))))
-                        nums)
+                            (compare (count a) (count b))))))
       ]
-  (doseq [n sort-result]
-    (println (str n)))
-  )
+  (doseq [n result]
+    (println n)))
 
