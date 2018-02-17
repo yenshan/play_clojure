@@ -12,6 +12,13 @@
       (let [c (re-pattern (str a))]
         (recur rst (s/replace-first res c ""))))))
 
+(defn remove-all [src comparison]
+  (loop [[a & rst] coll2, res coll1]
+    (if (nil? a)
+      res
+      (let [c (re-pattern (str a))]
+        (recur rst (s/replace-first res c ""))))))
+
 (let [n (Integer/parseInt (read-line))]
   (doseq [_ (range n)]
     (let [string (read-line)

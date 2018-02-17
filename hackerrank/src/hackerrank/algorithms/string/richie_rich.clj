@@ -31,26 +31,30 @@
         rearhalf (take hlen (reverse string))]
     (count-diff prehalf rearhalf)))
 
-(defn replace-first-when [fun coll1 coll2 c]
+(defn replace-first-if [pred to coll1 coll2]
   (loop [[a & rst1] coll1
          [b & rst2] coll2
          res []]
     (if (nil? a)
       res
-      (if (fun a b)
-        (concat (conj res c) rst1)
+      (if (pred a b)
+        (concat (conj res to) rst1)
         (recur rst1 rst2 (conj res a))))))
 
+(defn replace-first 
+  [scoll ccoll match replacement]
+  )
+  
 (defn replace-both-when
-  "前半と後半の数字が違う組み合わせの最初だけ両方をcに置き換える"
+  "前半と後半の数字を比較して最初だけ両方をcに置き換える"
   [fun string c]
   (let [len (count string)
         hlen (quot len 2)
         left (take hlen string)
         right (take hlen (reverse string))
         center (subs string hlen (- len hlen))
-        left2 (replace-first-when fun left right c)
-        right2 (replace-first-when fun right left c)
+        left2 (replace-first-if fun c left right)
+        right2 (replace-first-if fun c right left)
         center (subs string hlen (- len hlen))
         ]
     (->> (concat left2 center (reverse right2))
@@ -68,7 +72,7 @@
                                            string))
         (= 1 k (count string)) (println \9)
         :else 
-        ;; 前半と後半の数字が違うもので、どこかが9のものを最初に置換する
+        ;; 前半と後半の数字が違うもので、どちらかかが9のものを最初に置換する
         ;; 全部の数字に対して行って、変更した数をkから引く
         (let [tmp1 (->palendrome (fn [a b]
                                    (if (or (= a \9) (= b \9)) \9 a))
