@@ -8,94 +8,83 @@
 (defn to-int [c] 
   (Integer/parseInt (str c)))
 
-(defn ->palendrome [fun string]
+(defn lefth [string]
+  (let [hlen (quot (count string) 2)]
+    (apply str (take hlen string))))
+
+(defn righth [string]
+  (let [hlen (quot (count string) 2)]
+    (apply str (take hlen (reverse string)))))
+
+(defn center [string]
   (let [len (count string)
-        hlen (quot len 2)
-        left (take hlen string)
-        right (take hlen (reverse string))
-        center (subs string hlen (- len hlen))
-        left2 (map fun left right)
-        right2 (map fun right left)
-        ]
-    (->> (concat left2 center (reverse right2))
-         (apply str))))
+        hlen (quot len 2)]
+    (subs string hlen (- len hlen))))
+
+
+(defn replace-to-big [string]
+  (let [pstr (map #(max (to-int %1) (to-int %2))
+                  (lefth string)
+                  (righth string))]
+    (apply str (concat pstr (center string) (reverse pstr)))))
+
 
 (defn count-diff [coll1 coll2]
-  (->> (map #(not= %1 %2) coll1 coll2)
-       (filter true?)
-       count))
+  (reduce + (map #(if (not= %1 %2) 1 0) coll1 coll2)))
 
-(defn diff-for-palendrome [string]
-  (let [hlen (quot (count string) 2)
-        prehalf (take hlen string)
-        rearhalf (take hlen (reverse string))]
-    (count-diff prehalf rearhalf)))
+(defn first-index-of [f coll1 coll2]
+  (loop [[a & rst1] coll1, [b & rst2] coll2, i 0]
+    (cond (nil? a) nil
+          (f a b) i
+          :else (recur rst1 rst2 (inc i)))))
 
-(defn replace-first-if [pred to coll1 coll2]
-  (loop [[a & rst1] coll1
-         [b & rst2] coll2
-         res []]
-    (if (nil? a)
-      res
-      (if (pred a b)
-        (concat (conj res to) rst1)
-        (recur rst1 rst2 (conj res a))))))
+(defn index-for-replace [string]
+  (let [l (lefth string)
+        r (righth string)]
+    (or (first-index-of #(and (not= %1 %2)
+                              (not= %1 \9)
+                              (not= %2 \9))
+                              l r)
+        (first-index-of #(not (= %1 %2 \9)) l r))))
 
-(defn replace-first 
-  [scoll ccoll match replacement]
-  )
-  
-(defn replace-both-when
-  "前半と後半の数字を比較して最初だけ両方をcに置き換える"
-  [fun string c]
-  (let [len (count string)
-        hlen (quot len 2)
-        left (take hlen string)
-        right (take hlen (reverse string))
-        center (subs string hlen (- len hlen))
-        left2 (replace-first-if fun c left right)
-        right2 (replace-first-if fun c right left)
-        center (subs string hlen (- len hlen))
-        ]
-    (->> (concat left2 center (reverse right2))
-         (apply str))))
+(defn replace-nth [n c string]
+  (letfn [(replace-c [s]
+            (str (subs s 0 n) c (subs s (inc n))))]
+    (apply str 
+      (replace-c (lefth string))
+      (center string)
+      (reverse (replace-c (righth string))))))
 
-(let [
-      ;[_ k] (str->nums (read-line))
-      [_ k] [8 4]
-      ;string (read-line)
-      string "1111911"
-      diffn (diff-for-palendrome string)
-      ]
-  (cond (< k diffn) (println -1)
-        (= k diffn) (println (->palendrome #(max (to-int %1) (to-int %2))
-                                           string))
-        (= 1 k (count string)) (println \9)
-        :else 
-        ;; 前半と後半の数字が違うもので、どちらかかが9のものを最初に置換する
-        ;; 全部の数字に対して行って、変更した数をkから引く
-        (let [tmp1 (->palendrome (fn [a b]
-                                   (if (or (= a \9) (= b \9)) \9 a))
-                                 string)
-              rst-k (- k (count-diff string tmp1))
-              ]
-          (println rst-k tmp1)
-          (if (zero? rst-k)
-            (println tmp1)
-            ;; 前半と後半の数字が違うもので9が入ってないものに
-            ;; 両方を9に置換する。
-            (let [tmp2 (replace-both-when not= tmp1 \9)
-                  rst2-k (- rst-k 2)
-                  ]
-              (println rst2-k tmp2)
-              (if (zero? rst2-k)
-                (println tmp2)
-                (let [tmp3 (replace-both-when = tmp2 \9)
-                      rst3-k (- rst2-k 2)
-                      ]
-                  (println tmp3)
-                  (if (zero? rst3-k)
-                    (println tmp3)
-                    (println rst3-k tmp3)
-                  ))))))))
+(defn replace-to-9 [string]
+  (if-let [i (index-for-replace string)]
+    (replace-nth i \9 string)
+    nil))
+
+(defn replace-center [string]
+  (if (empty? (center string))
+    -1
+    (apply str
+           (lefth string)
+           \9
+           (reverse (righth string)))))
+
+(defn count-diff-palendrome [string]
+  (count-diff (lefth string) (righth string)))
+
+(defn palendrome? [string]
+  (= (lefth string) (righth string)))
+
+(defn make-palendrom [string k]
+  (cond (empty? string) -1
+        (zero? k) (if (palendrome? string) string -1)
+        :else (let [diffn (count-diff-palendrome string)]
+                (cond (> diffn k) -1
+                      (= diffn k) (replace-to-big string)
+                      (= 1 k) (replace-center string)
+                      :else (recur (replace-to-9 string) (- k 2))
+                      ))))
+
+(let [[n k] (str->nums (read-line))
+      string (read-line)]
+  (println (make-palendrom string k)))
 
