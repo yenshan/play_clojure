@@ -1,5 +1,13 @@
+;;
+;; https://www.hackerrank.com/challenges/richie-rich/problem
+;;
 (ns hackerrank.algorithms.string.richie-rich
   (:require [clojure.string :as s]))
+
+;;
+;; This problem was so so hard for me until I found recusive method.
+;; There are many condition to handle, and was a good practice of structured programming.
+;;
 
 (defn str->nums [str]
   (->> (s/split str #" ")
@@ -53,12 +61,12 @@
      :center (:center strdat)}
     ))
 
-(defn replace-to-9-from-left [strdat]
+(defn replace-to-9-from-left [n strdat]
   (letfn [(replace-9 [s1 s2]
             (loop [[a & rst1] s1 [b & rst2] s2, res1 [], res2 [], cnt 0]
               (if (nil? a)
                 [res1 res2]
-                (let [cnd (and (zero? cnt) (not= a \9) (not= b \9))]
+                (let [cnd (and (< cnt n) (not= a \9) (not= b \9))]
                   (recur rst1
                          rst2
                          (conj res1 (if cnd \9 a))
@@ -82,10 +90,6 @@
 (defn palendrome? [strdat]
   (= (:left strdat) (:right strdat)))
 
-(defn every-is-9? [strdat]
-  (every? #(= % \9) 
-          (concat (:left strdat) (:center strdat) (:right strdat))))
-
 (defn to-str [strdat]
   (apply str 
          (concat (:left strdat)
@@ -100,7 +104,10 @@
                 (< k diffn) NOT-POSSIBLE 
                 (= k diffn) (replace-to-big strdat)
                 (= k 1) (replace-center strdat)
-                :else (recur (replace-to-9-from-left strdat) (- k 2))
+                (>= (- k diffn) 2) (recur 
+                                     (replace-to-9-from-left (quot (- k diffn) 2) strdat)
+                                     (+ diffn (mod (- k diffn) 2)))
+                :else (recur (replace-to-9-from-left 1 strdat) (- k 2))
                 )))
           ]
     (let [sd (->strdat string)
