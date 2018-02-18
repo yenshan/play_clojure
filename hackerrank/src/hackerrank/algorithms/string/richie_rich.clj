@@ -10,81 +10,108 @@
 
 (defn lefth [string]
   (let [hlen (quot (count string) 2)]
-    (apply str (take hlen string))))
+    (vec (take hlen string))))
 
 (defn righth [string]
   (let [hlen (quot (count string) 2)]
-    (apply str (take hlen (reverse string)))))
+    (vec (take hlen (reverse string)))))
 
 (defn center [string]
   (let [len (count string)
         hlen (quot len 2)]
     (subs string hlen (- len hlen))))
 
+(defn ->strdat [string]
+  {:left (lefth string)
+   :right (righth string)
+   :center (center string)})
 
-(defn replace-to-big [string]
+(def NOT-POSSIBLE {:left "" :right "" :center "-1"})
+
+(defn replace-center [strdat]
+  (if (empty? (:center strdat))
+    NOT-POSSIBLE
+    (assoc strdat :center "9")))
+
+(defn replace-to-big [strdat]
   (let [pstr (map #(max (to-int %1) (to-int %2))
-                  (lefth string)
-                  (righth string))]
-    (apply str (concat pstr (center string) (reverse pstr)))))
+                  (:left strdat)
+                  (:right strdat))]
+    {:left pstr 
+     :right pstr 
+     :center (:center strdat)}
+    ))
+
+(defn replace-diff-to-9 [strdat]
+  (letfn [(replace-9 [s1 s2]
+            (map (fn [a b] (if (and (not= a b) (or (= a \9)
+                                                   (= b \9)))
+                             \9 a))
+                 s1 s2))]
+    {:left (replace-9 (:left strdat) (:right strdat))
+     :right (replace-9 (:right strdat) (:left strdat))
+     :center (:center strdat)}
+    ))
+
+(defn replace-to-9-from-left [strdat]
+  (letfn [(replace-9 [s1 s2]
+            (loop [[a & rst1] s1 [b & rst2] s2, res1 [], res2 [], cnt 0]
+              (if (nil? a)
+                [res1 res2]
+                (let [cnd (and (zero? cnt) (not= a \9) (not= b \9))]
+                  (recur rst1
+                         rst2
+                         (conj res1 (if cnd \9 a))
+                         (conj res2 (if cnd \9 b))
+                         (if cnd (inc cnt) cnt)
+                         )))))
+          ]
+    (let [rs (replace-9 (:left strdat) (:right strdat))]
+      {:left (first rs)
+       :right (second rs)
+       :center (:center strdat)}
+      )))
+
+(defn count-diff [f coll1 coll2]
+  (reduce + (map #(if (f %1 %2) 1 0) coll1 coll2)))
+
+(defn count-palendrome [f strdat]
+  (count-diff f (:left strdat) (:right strdat)))
 
 
-(defn count-diff [coll1 coll2]
-  (reduce + (map #(if (not= %1 %2) 1 0) coll1 coll2)))
+(defn palendrome? [strdat]
+  (= (:left strdat) (:right strdat)))
 
-(defn first-index-of [f coll1 coll2]
-  (loop [[a & rst1] coll1, [b & rst2] coll2, i 0]
-    (cond (nil? a) nil
-          (f a b) i
-          :else (recur rst1 rst2 (inc i)))))
+(defn every-is-9? [strdat]
+  (every? #(= % \9) 
+          (concat (:left strdat) (:center strdat) (:right strdat))))
 
-(defn index-for-replace [string]
-  (let [l (lefth string)
-        r (righth string)]
-    (or (first-index-of #(and (not= %1 %2)
-                              (not= %1 \9)
-                              (not= %2 \9))
-                              l r)
-        (first-index-of #(not (= %1 %2 \9)) l r))))
+(defn to-str [strdat]
+  (apply str 
+         (concat (:left strdat)
+                 (:center strdat)
+                 (reverse (:right strdat)))))
 
-(defn replace-nth [n c string]
-  (letfn [(replace-c [s]
-            (str (subs s 0 n) c (subs s (inc n))))]
-    (apply str 
-      (replace-c (lefth string))
-      (center string)
-      (reverse (replace-c (righth string))))))
-
-(defn replace-to-9 [string]
-  (if-let [i (index-for-replace string)]
-    (replace-nth i \9 string)
-    nil))
-
-(defn replace-center [string]
-  (if (empty? (center string))
-    -1
-    (apply str
-           (lefth string)
-           \9
-           (reverse (righth string)))))
-
-(defn count-diff-palendrome [string]
-  (count-diff (lefth string) (righth string)))
-
-(defn palendrome? [string]
-  (= (lefth string) (righth string)))
-
-(defn make-palendrom [string k]
-  (cond (empty? string) -1
-        (zero? k) (if (palendrome? string) string -1)
-        :else (let [diffn (count-diff-palendrome string)]
-                (cond (> diffn k) -1
-                      (= diffn k) (replace-to-big string)
-                      (= 1 k) (replace-center string)
-                      :else (recur (replace-to-9 string) (- k 2))
-                      ))))
+(defn make-palendrom [string kk]
+  (letfn [(iter [strdat k]
+            (let [diffn (count-palendrome not= strdat)]
+              (cond 
+                (zero? k) (if (palendrome? strdat) strdat NOT-POSSIBLE)
+                (< k diffn) NOT-POSSIBLE 
+                (= k diffn) (replace-to-big strdat)
+                (= k 1) (replace-center strdat)
+                :else (recur (replace-to-9-from-left strdat) (- k 2))
+                )))
+          ]
+    (let [sd (->strdat string)
+          diff9n (count-palendrome #(and (not= %1 %2) (or (= %1 \9) (= %2 \9))) sd)
+          sd2 (if (> diff9n 0) (replace-diff-to-9 sd) sd)
+          ]
+      (to-str (iter sd2 (- kk diff9n))))))
 
 (let [[n k] (str->nums (read-line))
       string (read-line)]
-  (println (make-palendrom string k)))
+  (if (<= n k) 
+    (println (apply str (take n (repeat \9))))
+    (println (make-palendrom string k))))
 
