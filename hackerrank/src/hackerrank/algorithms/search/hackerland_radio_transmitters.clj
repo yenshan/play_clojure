@@ -9,10 +9,7 @@
        (map #(Integer/parseInt %))))
 
 (defn far-pos-in-range [a k coll]
-  (loop [[b & rst] coll, res a]
-    (if (or (nil? b) (< k (- b a)))
-      res
-      (recur rst b))))
+  (apply max (cons a (take-while #(< k (- % a)) coll))))
 
 (let [[n k] (str->nums (read-line))
       pos (sort (str->nums (read-line)))
