@@ -54,16 +54,10 @@
                   (update-edge %)))
        (apply concat)))
 
-(defn getd [r c mtxm]
-  (some (fn [d] 
-          (when (and (= (:r d) r) (= (:c d) c))
-           (:d d)))
-        mtxm))
-
 (defn print-matrix [rows cols mtxm]
   (doseq [r (range rows)
           c (range cols)]
-    (print (getd r c mtxm))
+    (print (get mtxm [r c]))
     (if (= c (dec cols))
       (println "")
       (print " "))
@@ -75,8 +69,10 @@
                       (map (fn [[i d]]
                              {:r row :c i :d d })
                            (map-indexed vector (str->nums (read-line))))))
-      res (rotate-matrix-left R M N mtx-map)
+      res (->> (rotate-matrix-left R M N mtx-map)
+               (reduce (fn [res d]
+                         (assoc res [(:r d) (:c d)] (:d d)))
+                       {}))
       ]
   (print-matrix M N res))
-
 
