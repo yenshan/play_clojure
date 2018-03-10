@@ -5,44 +5,69 @@
   (->> (s/split str #" ")
        (map #(Integer/parseInt %))))
 
+(defn edge [f k o mtxm]
+  (drop-last 
+    (let [elem (filter f mtxm)]
+      (condp = o
+        :inorder (sort-by k elem)
+        :reverse (sort #(compare (get %2 k) (get %1 k)) elem)))))
 
-(defn rotate [{:keys [r c] :as pos} r-min r-max c-min c-max]
-  (cond-> pos
-    (and (= c c-min) (>= r r-min) (<= r (dec r-max))) (update :r inc)
-    (and (= c c-max) (>= r (inc r-min)) (<= r r-max)) (update :r dec)
-    (and (= r r-min) (>= c (inc c-min)) (<= c c-max)) (update :c dec)
-    (and (= r r-max) (>= c c-min) (<= c (dec c-max))) (update :c inc)))
+(defn take-edge [rmin rmax cmin cmax mtxm]
+  (let [top-e #(and (= rmin (:r %)) (<= cmin (:c %) cmax))
+        right-e #(and (= cmax (:c %)) (<= rmin (:r %) rmax))
+        bottom-e #(and (= rmax (:r %)) (<= cmin (:c %) cmax))
+        left-e #(and (= cmin (:c %)) (<= rmin (:r %) rmax))
+        ]
+  (concat (edge top-e :c :inorder mtxm) 
+          (edge right-e :r :inorder mtxm)
+          (edge bottom-e :c :reverse mtxm)
+          (edge left-e :r :reverse mtxm))))
 
-(defn rotate-matrix [mtxm rows cols]
-  (loop [r-min 0
-         r-max (dec rows)
-         c-min 0
-         c-max (dec cols)
-         res mtxm]
-    (if (or (>= r-min r-max) (>= c-min c-max))
+(defn matrix->edgelist [rows cols mtxm]
+  (loop [rmin 0
+         rmax (dec rows)
+         cmin 0
+         cmax (dec cols)
+         res []]
+    (if (or (>= rmin rmax) (>= cmin cmax))
       res
-      (let [nmtx (map #(rotate % r-min r-max c-min c-max) res)]
-        (recur (inc r-min)
-               (dec r-max)
-               (inc c-min)
-               (dec c-max)
-               nmtx)))))
+      (recur (inc rmin)
+             (dec rmax)
+             (inc cmin)
+             (dec cmax)
+             (conj res (take-edge rmin rmax cmin cmax mtxm))))))
 
-(defn get-n [mtxm row col]
-  (:d (some (fn [{:keys [r c] :as dat}]
-                (when (and (= r row) (= c col))
-                  dat))
-            mtxm)))
+(defn rotate-seq-left [n coll]
+  (let [rn (mod n (count coll))]
+  (if (zero? rn)
+    coll
+    (concat (drop rn coll) (take rn coll)))))
 
-(defn matrix-map->matrix [mtxm m n]
-  (for [r (range m)]
-    (for [c (range n)]
-      (get-n mtxm r c))))
+(defn update-edge [mtxm coll]
+  (map #(assoc %1 :d %2) mtxm coll))
 
-(defn print-matrix [mtx]
-  (letfn [(trim [s] (s/replace s #"[\[\]]" ""))]
-    (doseq [row mtx]
-      (println (trim (str (vec row)))))))
+(defn rotate-matrix-left [n rows cols mtxm]
+  (->> mtxm
+       (matrix->edgelist rows cols)
+       (map #(->> (map :d %)
+                  (rotate-seq-left n)
+                  (update-edge %)))
+       (apply concat)))
+
+(defn getd [r c mtxm]
+  (some (fn [d] 
+          (when (and (= (:r d) r) (= (:c d) c))
+           (:d d)))
+        mtxm))
+
+(defn print-matrix [rows cols mtxm]
+  (doseq [r (range rows)
+          c (range cols)]
+    (print (getd r c mtxm))
+    (if (= c (dec cols))
+      (println "")
+      (print " "))
+    ))
 
 (let [[M N R] (str->nums (read-line))
       mtx-map (apply concat 
@@ -50,7 +75,8 @@
                       (map (fn [[i d]]
                              {:r row :c i :d d })
                            (map-indexed vector (str->nums (read-line))))))
-      res (reduce (fn [m _] (rotate-matrix m M N)) mtx-map (range R))
+      res (rotate-matrix-left R M N mtx-map)
       ]
-  (print-matrix (matrix-map->matrix res M N)))
+  (print-matrix M N res))
+
 
