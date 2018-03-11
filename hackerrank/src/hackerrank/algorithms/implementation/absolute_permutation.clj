@@ -1,3 +1,6 @@
+;;
+;; https://www.hackerrank.com/challenges/absolute-permutation/problem
+;;
 (ns hackerrank.algorithms.implementation.absolute-permutation
   (:require [clojure.string :as s]))
 
@@ -5,53 +8,38 @@
   (->> (s/split str #" ")
        (map #(Integer/parseInt %))))
 
-(defn cand-permutation [n k]
-  (->> (range 1 (inc n))
-       (map (fn [d]
-              (let [n1 (+ k d)
-                    n2 (- d k)]
-                [(if (<= 1 n1 n) n1 nil) 
-                 (if (<= 1 n2 n) n2 nil)]
-                )))))
+(defn print-nums [i k]
+  (doseq [n (range i (+ i k))]
+    (print n)
+    (when (< n (dec (+ i k))) (print " "))
+    ))
 
-(defn permutations [coll]
-  (letfn [(iter [[a & rst], i, res]
-            (if (empty? a)
-              res
-              (let [ret (for [e a 
-                              :let [pd (get res e)]
-                              :when (and e (not pd))]
-                          (iter rst (inc i) (assoc res e i)))]
-                (if (empty? rst)
-                  ret
-                  (apply concat ret)))))
-          ]
-    (iter coll 0 {})))
+(defn print-abs-permutation [n k]
+  (loop [i 1]
+    (when (<= i n)
+      (when (not= 1 i) (print " "))
+      (print-nums (+ i k) k)
+      (print " ")
+      (print-nums i k)
+      (recur (+ i k k))
+    ))
+  (println ""))
 
-(defn print-coll [coll]
-  (loop [[a & rst] coll]
-    (if (nil? a)
-      (println "")
-      (do (print a)
-          (when-not (empty? rst)
-            (print " "))
-          (recur rst)
-            ))))
+(defn print-seq [coll]
+  (let [a (to-array coll)
+        len (count coll)]
+    (doseq [i (range len)]
+      (print (get a i))
+      (if (= i (dec len))
+        (println "")
+        (print " ")))))
 
 (let [T (Integer/parseInt (read-line))]
   (doseq [_ (range T)]
-    (let [[n k] (str->nums (read-line))
-          dat (cand-permutation n k)
-          pmt (->> (permutations dat)
-                   (filter #(= n (count %)))
-                   (map #(sort-by second %))
-                   set
-                   (map #(vec (map first %)))
-                   sort
-                   )
-          ]
-      (if (empty? pmt)
-        (println -1)
-        (print-coll (first pmt)))
-      )))
-            
+    (let [[n k] (str->nums (read-line))]
+      (cond (= k 0) (print-seq (range 1 (inc n)))
+            (odd? n) (println -1)
+            (not= 0 (mod n k)) (println -1)
+            (odd? (/ n k)) (println -1)
+            :else (print-abs-permutation n k)))))
+
