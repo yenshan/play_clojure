@@ -1,3 +1,6 @@
+;;
+;; https://www.hackerrank.com/challenges/bomber-man/problem
+;;
 (ns hackerrank.algorithms.implementation.the-bomberman-game
   (:require [clojure.string :as s]))
 
@@ -32,7 +35,7 @@
                      (assoc (left p) :bmb)
                      (assoc (right p) :bmb))))))
 
-(defn print-matrix [bmbm rows cols]
+(defn print-matrix [rows cols bmbm]
   (doseq [r (range rows), c (range cols)]
     (print (if (get bmbm [r c]) \O  \.))
     (when (= c (dec cols)) (println ""))))
@@ -55,11 +58,13 @@
                                   res
                                   line)))))
       ]
-  (if (even? N)
-    (print-all-bombs R C)
-    (let [res (reduce (fn [m _]
-                        (plant-bombs R C (detonate m)))
-                      bombs
-                      (range 3 (inc N) 2))]
-      (print-matrix res R C))))
-
+  (cond (even? N) (print-all-bombs R C)
+        (< N 3) (print-matrix R C bombs)
+        :else (let [cnt (count (range 3 (inc N) 2))
+                    res1 (plant-bombs R C (detonate bombs))
+                    res2 (plant-bombs R C (detonate res1))
+                    ]
+                (if (odd? cnt)
+                  (print-matrix R C res1)
+                  (print-matrix R C res2)
+                  ))))
