@@ -1,0 +1,4 @@
+(doc sleep)
+(find-doc "sleep")
+(find-doc "wait")
+(doc comp)
