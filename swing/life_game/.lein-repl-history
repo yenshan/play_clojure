@@ -2,3 +2,5 @@
 (find-doc "sleep")
 (find-doc "wait")
 (doc comp)
+q
+exit
