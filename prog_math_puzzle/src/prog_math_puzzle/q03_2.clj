@@ -13,7 +13,11 @@
        cards))
 
 (let [cards (map (fn [i] [i :BACK]) (range 1 (inc 100)))]
-  (->> (reduce reverse-cards cards (range 2 (inc 100)))
+  (->> (loop [from 2, res cards]
+         (let [ncards (reverse-cards res from)]
+           (if (= ncards res)
+             res
+             (recur (inc from) ncards))))
        (filter #(= :BACK (second %)))
        (map first)
        println))
