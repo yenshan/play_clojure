@@ -5,9 +5,8 @@
 (def date-format (SimpleDateFormat. "yyyyMMdd"))
 
 (defn date [dstr]
-  (let [cal (Calendar/getInstance)
-        d (.parse date-format dstr)]
-    (.setTime cal d)
+  (let [cal (Calendar/getInstance)]
+    (.setTime cal (.parse date-format dstr))
     cal))
 
 (defn to-str [cal]
