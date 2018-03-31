@@ -1,15 +1,19 @@
-(ns prog-math-puzzle.repeat-combination3)
+(ns prog-math-puzzle.repeat-combination4)
 
 ;;
-;; 深さ優先結合
-;; 結合した結果をもらって、さらに組み合わせを行う
+;; 幅さ優先結合
+;; 引数に結果を渡して結合を繰り返す方式で末尾最適あり
 ;;
+
+(defn combination [xs ys n]
+  (if (= n 0)
+    ys
+    (recur xs
+           (for [x xs, y ys] (concat x y))
+           (dec n))))
 
 (defn repeat-combination [xs n]
-  (if (= n 0)
-    [[]]
-    (for [x xs
-          y (repeat-combination xs (dec n))]
-       (cons x y))))
+  (combination (map vector xs) [[]] n))
 
-(println (repeat-combination [1 2 3] 3))
+
+(repeat-combination [1 2 3] 3)
