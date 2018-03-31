@@ -4,17 +4,13 @@
 (defn combs [xs ys]
   (for [x xs, y ys] (concat x y)))
 
-(defn repeat-comb-width [coll n]
-  (loop [res coll
-         cnt n]
-    (if (= cnt 1)
-      res
-      (recur (combs coll res) (dec cnt)))))
+(defn repeat-comb-width [xs n]
+  (if (= n 1)
+    xs
+    (combs xs (repeat-comb-width xs (dec n)))))
 
 (defn repeat-combination [coll n]
-  (if (= n 1)
-    [coll]
-    (repeat-comb-width (map vector coll) n)))
+  (repeat-comb-width (map vector coll) n))
 
 
-(repeat-combination [1 2 3] 2)
+(repeat-combination [1 2 3] 3)
