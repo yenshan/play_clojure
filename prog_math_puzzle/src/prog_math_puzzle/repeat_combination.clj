@@ -1,19 +1,18 @@
 (ns prog-math-puzzle.repeat-combination)
 
+;;
+;; 深さ優先探索の組み合わせ作成
+;; 結合した結果を関数の引数に渡す方式
+;;
+
+(defn combination [xs ys n]
+  (if (<= n 0)
+    [ys]
+    (apply concat
+           (map #(combination xs (conj ys %) (dec n))
+                xs))))
 
 (defn repeat-combination [xs n]
-  (letfn [(comb-depth [cnt res]
-            (if (zero? cnt)
-              [res]
-              (apply concat
-                     (for [x xs]
-                       (comb-depth (dec cnt)
-                                   (conj res x))))))
-          ]
-    (if (= n 1)
-      [xs]
-      (comb-depth n []))))
-
-(println (repeat-combination [1 2 3] 2))
+  (combination xs [] n))
 
 
