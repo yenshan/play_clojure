@@ -1,16 +1,19 @@
 (ns prog-math-puzzle.repeat-combination2)
 
+;;
+;; 幅優先結合
+;; 結合した結果をもらって、さらに結合する方式
+;;
 
-(defn combs [xs ys]
-  (for [x xs, y ys] (concat x y)))
-
-(defn repeat-comb-width [xs n]
+(defn combination [xs n]
   (if (= n 1)
     xs
-    (combs xs (repeat-comb-width xs (dec n)))))
+    (for [x xs
+          y (combination xs (dec n))]
+      (concat x y))))
 
 (defn repeat-combination [coll n]
-  (repeat-comb-width (map vector coll) n))
+  (combination (map vector coll) n))
 
 
 (repeat-combination [1 2 3] 3)
