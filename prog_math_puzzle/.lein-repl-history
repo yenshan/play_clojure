@@ -102,3 +102,5 @@ m
 (first '())
 (rest '())
 (next '())
+q
+quit
