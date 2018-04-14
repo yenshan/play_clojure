@@ -1,4 +1,4 @@
-(ns prog-math-puzzle.repeat-combination4)
+(ns prog-math-puzzle.repeat-combination3)
 
 ;;
 ;; 幅さ優先結合
@@ -9,11 +9,11 @@
   (if (= n 0)
     ys
     (recur xs
-           (for [x xs, y ys] (concat x y))
+           (for [x xs, y ys] (cons x y))
            (dec n))))
 
 (defn repeat-combination [xs n]
-  (combination (map vector xs) [[]] n))
+  (combination xs [[]] n))
 
 
 (repeat-combination [1 2 3] 3)
