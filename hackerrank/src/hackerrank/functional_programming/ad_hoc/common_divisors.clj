@@ -4,6 +4,10 @@
 (ns hackerrank.functional-programming.ad-hoc.common-divisors
   (:require [clojure.string :as s]))
 
+;;
+;; Good problem. You shoule optimize algorithm for performance.
+;;
+
 (defn str->nums [str]
   (->> (s/split str #" ")
        (map #(Integer/parseInt %))))
@@ -13,7 +17,7 @@
     a
     (recur b (mod a b))))
 
-(defn count-if [maxn f b]
+(defn count-divisors [maxn f b]
   (loop [n 1, cnt 0]
     (if (> n (quot maxn b))
       cnt
@@ -24,8 +28,8 @@
   (let [ngcd (gcd (max n1 n2) (min n1 n2))]
     (+ 1
        (if (odd? ngcd)
-         (count-if ngcd #(+ % 2) 3)
-         (count-if ngcd inc 2)))))
+         (count-divisors ngcd #(+ % 2) 3)
+         (count-divisors ngcd inc 2)))))
 
 (defn -run []
   (let [T (Integer/parseInt (read-line))]
