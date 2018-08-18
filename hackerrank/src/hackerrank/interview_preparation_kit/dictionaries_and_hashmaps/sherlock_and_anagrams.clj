@@ -4,8 +4,8 @@
 (ns hackerrank.interview-preparation-kit.dictionaries-and-hashmaps.sherlock-and-anagrams)
 
 (defn substr [string len]
-  (for [i (range (+ 1 (- (count string) len)))]
-    (subs string i (+ i len))))
+  (map #(subs string % (+ % len))
+       (range (+ (count string) (- len) 1))))
 
 (defn reverse-str [s]
   (apply str (reverse s)))
@@ -24,11 +24,7 @@
           pairs (for [i (range 1 (count s))]
                   (make-pairs 
                     (map sort (substr s i))))
-          res (reduce (fn [s p]
-                        (+ s (apply + (for [[a b] p
-                                       :when (= a b)]
-                                        1))))
-                      0
-                      pairs)
+          res (apply concat (for [p pairs] 
+                              (filter (fn [[a b]] (= a b)) p)))
           ]
-      (println res))))
+      (println (count res)))))
