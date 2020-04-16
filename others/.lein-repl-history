@@ -1,2 +1,6 @@
 (println "a" "b")
 (empty? "")
+(println \a)
+(println (int a))
+(println (int \a)
+(println (int \a))
