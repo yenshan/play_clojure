@@ -46,10 +46,8 @@
       (turn-dir ball obj))))
 
 
-(defn move-bar [bar dir]
-  (when dir
-    (assoc bar :pos
-           (->> (map #(* 5 %) dir) (map + (:pos bar))))))
+(defn move-bar [{pos :pos :as bar} dir]
+  (assoc bar :pos (map + pos dir)))
 
 (defn get-canvas-context-from-id
   [id]
@@ -65,18 +63,18 @@
        ")"))
 
 (defn draw-rect
-  [ctx [x y] [w h] color]
+  [ctx x y w h color]
     (doto ctx
       (aset "fillStyle" (to-color color))
       (.fillRect x y w h)))
 
 (defn draw-obj
-  [ctx {:keys [pos size color]}]
-  (draw-rect ctx pos size color))
+  [ctx {[x y] :pos [w h] :size color :color}]
+  (draw-rect ctx x y w h color))
 
 (defn clear-screen
-  [{:keys [ctx size]}]
-  (draw-rect ctx [0 0] size [0 0 0]))
+  [{ctx :ctx [w h] :size}]
+  (draw-rect ctx 0 0 w h [0 0 0]))
 
 (def canvas-info (get-canvas-context-from-id "canvas"))
 (def walls (create-walls))
@@ -93,8 +91,8 @@
 
 (defn handle-key [e]
   (case (.-keyCode e)
-  37 (swap! bar move-bar [-1 0]) ; Key Left
-  39 (swap! bar move-bar [1 0])  ; Key Right
+  37 (swap! bar move-bar [-5 0]) ; Key Left
+  39 (swap! bar move-bar [5 0])  ; Key Right
   ))
 
  
